@@ -215,6 +215,29 @@ class WidgetGallery(QtWidgets.QWidget):
         layout.addWidget(parameter_form)
         self.forms.append(parameter_form)
 
+        # Checkable
+        box = parameter_form.add_group('Checkable Parameters')
+        form = box.form
+
+        parm = IntParameter('int')
+        parm.set_slider_min(10)
+        parm.set_slider_max(100)
+        parm.set_default(20)
+        form.add_parameter(parm, checkable=True)
+
+        parm = FloatParameter('float')
+        parm.set_slider_max(10)
+        parm.set_default(3.14159265359)
+        form.add_parameter(parm, checkable=True)
+
+        parm = StringParameter('string')
+        parm.set_placeholder('Placeholder ...')
+        form.add_parameter(parm, checkable=True)
+
+        parm = SizeParameter('sizef')
+        form.add_parameter(parm, checkable=True)
+        form.widgets()['sizef_enabled'].set_value(True)
+
         # TabData
         box = parameter_form.add_group('tabdata')
         form = box.form
@@ -255,6 +278,7 @@ class WidgetGallery(QtWidgets.QWidget):
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.DEBUG, force=True)
     with application():
         widget = WidgetGallery()
         widget.show()
