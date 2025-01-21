@@ -10,22 +10,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 from . import utils
 from .box import CollapsibleBox
 from .scrollarea import VerticalScrollArea
-from .widgets import ParameterWidget
-
-
-class ParameterToggle(QtWidgets.QCheckBox):
-    def __init__(self, name: str, parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.name = name
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({repr(self.name)})'
-
-    def set_value(self, value: bool) -> None:
-        self.setChecked(value)
-
-    def value(self) -> bool:
-        return self.isChecked()
+from .widgets import ParameterWidget, BoolParameter
 
 
 class ParameterToolTip(QtWidgets.QFrame):
@@ -198,14 +183,18 @@ class ParameterForm(QtWidgets.QWidget):
         # checkbox
         if checkable:
             checkbox_name = f'{name}_enabled'
-            checkbox = ParameterToggle(checkbox_name)
+            checkbox = BoolParameter(checkbox_name)
             self.grid_layout.addWidget(checkbox, row, 0)
             checkbox.set_value(False)
             widget.blockSignals(True)
             widget.setEnabled(False)
             widget.blockSignals(False)
-            checkbox.toggled.connect(partial(self._set_widget_row_enabled, checkbox))
-            checkbox.toggled.connect(lambda: self.parameter_changed.emit(checkbox))
+            checkbox.value_changed.connect(
+                partial(self._set_widget_row_enabled, checkbox)
+            )
+            checkbox.value_changed.connect(
+                lambda: self.parameter_changed.emit(checkbox)
+            )
 
             self._widgets[checkbox_name] = checkbox
 
@@ -332,7 +321,7 @@ class ParameterForm(QtWidgets.QWidget):
                     values[name] = widget.values()
                 else:
                     values.update(widget.values())
-            elif isinstance(widget, (ParameterWidget | ParameterToggle)):
+            elif isinstance(widget, ParameterWidget):
                 values[name] = widget.value()
         return values
 
