@@ -17,7 +17,7 @@ readme = "README.md"
 dev = [
     "black>=24.0",
     "python-semantic-release>=9.0",
-    "qt-themes>=0.1",
+    "qt-themes>=0.2",
     "PySide6",
 ]
 pyside2 = ["PySide2"]
