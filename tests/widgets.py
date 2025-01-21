@@ -7,25 +7,26 @@ from functools import partial
 import qt_themes
 from qtpy import QtGui, QtCore, QtWidgets
 
-from qt_parameters.box import CollapsibleBox
-from qt_parameters.editor import ParameterBox, ParameterForm
-from qt_parameters.tabdata import TabDataParameter
-from qt_parameters.widgets import (
-    IntParameter,
-    FloatParameter,
-    PointParameter,
-    PointFParameter,
-    SizeParameter,
-    SizeFParameter,
+from qt_parameters import (
     BoolParameter,
-    PathParameter,
-    StringParameter,
+    CollapsibleBox,
     ColorParameter,
-    EnumParameter,
-    MultiIntParameter,
-    MultiFloatParameter,
     ComboParameter,
+    EnumParameter,
+    FloatParameter,
+    IntParameter,
     Label,
+    MultiFloatParameter,
+    MultiIntParameter,
+    ParameterBox,
+    ParameterForm,
+    PathParameter,
+    PointFParameter,
+    PointParameter,
+    SizeFParameter,
+    SizeParameter,
+    StringParameter,
+    TabDataParameter,
 )
 from tests import application
 
