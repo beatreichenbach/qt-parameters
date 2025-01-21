@@ -1,10 +1,7 @@
-import os.path
-from collections.abc import Sequence
-
 from PySide6 import QtCore, QtGui, QtWidgets
 
 
-def create_header_image(
+def create_drop_shadow_image(
     path: str,
     output_path: str,
     shadow_radius: int = 32,
@@ -53,4 +50,4 @@ def create_header_image(
 
 
 if __name__ == '__main__':
-    create_header_image('./assets/editor.png', './assets/header.png')
+    create_drop_shadow_image('./assets/editor.png', './assets/header.png')

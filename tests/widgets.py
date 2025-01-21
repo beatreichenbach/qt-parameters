@@ -45,7 +45,7 @@ class WidgetGallery(QtWidgets.QWidget):
             form.set_state(state)
 
     def _init_ui(self) -> None:
-        self.setWindowTitle('Paramater Widgets')
+        self.setWindowTitle('Parameter Widgets')
         self.resize(1280, 560)
 
         layout = QtWidgets.QHBoxLayout()
