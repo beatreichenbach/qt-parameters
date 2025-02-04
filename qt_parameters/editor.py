@@ -82,8 +82,9 @@ class ParameterLabel(QtWidgets.QLabel):
         global_position = QtGui.QCursor.pos()
         if self.geometry().contains(self.parent().mapFromGlobal(global_position)):
             if self._tooltip is None:
-                self._tooltip = ParameterToolTip(self._widget, parent=self.window())
-            self._tooltip.move(self.window().mapFromGlobal(global_position))
+                self._tooltip = ParameterToolTip(self._widget)
+                self._tooltip.setParent(self.window(), QtCore.Qt.WindowType.ToolTip)
+            self._tooltip.move(global_position)
             self._tooltip.show()
 
 
