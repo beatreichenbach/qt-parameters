@@ -15,7 +15,7 @@ class ResizeGrip(QtWidgets.QWidget):
         self._start_size_policy = None
         self._start_max_size = None
 
-        self.setCursor(QtCore.Qt.CursorShape.SizeBDiagCursor)
+        self.setCursor(QtCore.Qt.CursorShape.SizeFDiagCursor)
         self.reset()
         parent.installEventFilter(self)
 
