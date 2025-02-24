@@ -174,6 +174,7 @@ class WidgetGallery(QtWidgets.QWidget):
 
         # Options
         box = parameter_form.add_group('Options')
+        box.set_collapsible(False)
         form = box.form
 
         parm = ComboParameter('combo')
