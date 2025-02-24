@@ -32,7 +32,6 @@ class ParameterWidget(QtWidgets.QWidget):
 
         self._init_layout()
         self._init_ui()
-        self._init_defaults()
 
         if name:
             self.set_name(name)
@@ -43,25 +42,11 @@ class ParameterWidget(QtWidgets.QWidget):
 
     def _init_layout(self) -> None:
         self._layout = QtWidgets.QHBoxLayout()
-        self.setLayout(self._layout)
         self._layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self._layout)
 
     def _init_ui(self) -> None:
         pass
-
-    def _init_defaults(self) -> None:
-        self.blockSignals(True)
-        attributes = dir(self.__class__)
-        for name in attributes:
-            if not name.startswith('_') or name.startswith('__') or name == '_value':
-                continue
-            try:
-                setter = getattr(self, f'set{name}')
-                value = getattr(self, name)
-            except AttributeError:
-                continue
-            setter(value)
-        self.blockSignals(False)
 
     def changeEvent(self, event: QtCore.QEvent) -> None:
         if event.type() == QtCore.QEvent.Type.EnabledChange:
@@ -120,11 +105,13 @@ class IntParameter(ParameterWidget):
     def _init_ui(self) -> None:
         # Line
         self.line = IntLineEdit(self)
+        self.line.set_value(self._value)
         self.line.value_changed.connect(self._line_value_changed)
         self._layout.addWidget(self.line)
 
         # Slider
         self.slider = IntSlider()
+        self.slider.set_maximum(self._slider_max)
         self.slider.value_changed.connect(self._slider_value_changed)
         # Prevent any size changes when slider shows
         self.slider.setMaximumHeight(self.line.minimumSizeHint().height())
@@ -225,10 +212,13 @@ class FloatParameter(IntParameter):
         # line
         self.line = FloatLineEdit(self)
         self.line.value_changed.connect(self._line_value_changed)
+        self.line.set_value(self._value)
+        self.line.set_decimals(self._decimals)
         self._layout.addWidget(self.line)
 
         # slider
         self.slider = FloatSlider()
+        self.slider.set_maximum(self._slider_max)
         self.slider.value_changed.connect(self._slider_value_changed)
         # prevent any size changes when slider shows
         self.slider.setMaximumHeight(self.line.minimumSizeHint().height())
@@ -646,9 +636,9 @@ class BoolParameter(ParameterWidget):
 
 
 class MultiIntParameter(IntParameter):
-    multi_count = 2
     value_changed: QtCore.Signal = QtCore.Signal(tuple)
 
+    _count: int = 2
     _value: tuple[int, ...] = (0, 0)
     _default: tuple[int, ...] = (0, 0)
     _keep_ratio: bool = True
@@ -659,18 +649,20 @@ class MultiIntParameter(IntParameter):
         self.lines = []
         for i in range(self._count):
             line = IntLineEdit()
+            line.set_value(0)
             line.value_changed.connect(self._line_value_changed)
             self._layout.addWidget(line)
             self.lines.append(line)
 
         # Slider
         self.slider = IntSlider()
+        self.slider.set_maximum(self._slider_max)
         self.slider.value_changed.connect(self._slider_value_changed)
         # Prevent any size changes when slider shows
         line_height = self.lines[0].minimumSizeHint().height()
         self.slider.setMaximumHeight(line_height)
         self._layout.addWidget(self.slider)
-        self._layout.setStretch(self.multi_count, 1)
+        self._layout.setStretch(self._count, 1)
 
         # Keep ratio button
         self.keep_ratio_button = RatioButton()
@@ -679,6 +671,7 @@ class MultiIntParameter(IntParameter):
         self._layout.addWidget(self.keep_ratio_button)
 
         self.setFocusProxy(self.lines[0])
+        self.set_keep_ratio(self._keep_ratio)
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         QtWidgets.QWidget.resizeEvent(self, event)
@@ -730,14 +723,14 @@ class MultiIntParameter(IntParameter):
         if not all(values[0] == x for x in values):
             self.set_keep_ratio(False)
         if self._keep_ratio:
-            values = (values[0],) * self.multi_count
+            values = (values[0],) * self._count
         ParameterWidget.set_value(self, self._cast_to_type(values))
         self._set_slider_value(values[0])
         self._set_line_values(values)
 
     def _line_value_changed(self, value: int) -> None:
         if self._keep_ratio:
-            values = (self.lines[0].value(),) * self.multi_count
+            values = (self.lines[0].value(),) * self._count
             for line in self.lines[1:]:
                 line.set_value(values[0])
         else:
@@ -748,7 +741,7 @@ class MultiIntParameter(IntParameter):
         self._set_slider_value(values[0])
 
     def _slider_value_changed(self, value: int) -> None:
-        values = (value,) * self.multi_count
+        values = (value,) * self._count
         value = self._cast_to_type(values)
         ParameterWidget.set_value(self, value)
         self._set_line_values(values)
@@ -765,6 +758,7 @@ class MultiIntParameter(IntParameter):
     def _cast_to_type(self, values: tuple[int, ...]) -> Any:
         return values
 
+
 class MultiFloatParameter(MultiIntParameter):
     _value: tuple[float, ...] = (0, 0)
     _default: tuple[float, ...] = (0, 0)
@@ -775,30 +769,34 @@ class MultiFloatParameter(MultiIntParameter):
     _decimals: int = 4
 
     def _init_ui(self) -> None:
-        # lines
+        # Lines
         self.lines = []
-        for i in range(self.multi_count):
+        for i in range(self._count):
             line = FloatLineEdit()
+            line.set_value(0)
+            line.set_decimals(self._decimals)
             line.value_changed.connect(self._line_value_changed)
             self._layout.addWidget(line)
             self.lines.append(line)
 
-        # slider
+        # Slider
         self.slider = FloatSlider()
+        self.slider.set_maximum(self._slider_max)
         self.slider.value_changed.connect(self._slider_value_changed)
-        # prevent any size changes when slider shows
+        # Prevent any size changes when slider shows
         line_height = self.lines[0].minimumSizeHint().height()
         self.slider.setMaximumHeight(line_height)
         self._layout.addWidget(self.slider)
-        self._layout.setStretch(self.multi_count, 1)
+        self._layout.setStretch(self._count, 1)
 
-        # keep ratio button
+        # Keep ratio button
         self.keep_ratio_button = RatioButton()
         self.keep_ratio_button.setMaximumSize(line_height, line_height)
         self.keep_ratio_button.toggled.connect(self.set_keep_ratio)
         self._layout.addWidget(self.keep_ratio_button)
 
         self.setFocusProxy(self.lines[0])
+        self.set_keep_ratio(self._keep_ratio)
 
     def decimals(self) -> int:
         return self._decimals
@@ -838,6 +836,7 @@ class MultiFloatParameter(MultiIntParameter):
     def set_value(self, value: tuple[float, ...]) -> None:
         super().set_value(value)
 
+
 class PointParameter(MultiIntParameter):
     value_changed: QtCore.Signal = QtCore.Signal(QtCore.QPoint)
 
@@ -845,6 +844,11 @@ class PointParameter(MultiIntParameter):
     _default: QtCore.QPoint = QtCore.QPoint(0, 0)
     _slider_visible: bool = False
     _ratio_visible: bool = False
+
+    def _init_ui(self) -> None:
+        super()._init_ui()
+        self.set_slider_visible(self._slider_visible)
+        self.set_ratio_visible(self._ratio_visible)
 
     def set_value(self, value: QtCore.QPoint | Sequence) -> None:
         super().set_value(value)
@@ -866,6 +870,11 @@ class PointFParameter(MultiFloatParameter):
     _default: QtCore.QPointF = QtCore.QPointF(0, 0)
     _slider_visible: bool = False
     _ratio_visible: bool = False
+
+    def _init_ui(self) -> None:
+        super()._init_ui()
+        self.set_slider_visible(self._slider_visible)
+        self.set_ratio_visible(self._ratio_visible)
 
     def set_value(self, value: QtCore.QPointF | Sequence) -> None:
         super().set_value(value)  # noqa
@@ -919,9 +928,9 @@ class SizeFParameter(MultiFloatParameter):
 
 
 class ColorParameter(MultiFloatParameter):
-    multi_count = 3
     value_changed: QtCore.Signal = QtCore.Signal(QtGui.QColor)
 
+    _count: int = 3
     _value: QtGui.QColor = QtGui.QColor(0, 0, 0)
     _default: QtGui.QColor = QtGui.QColor(0, 0, 0)
     _color_min: float | None = 0
@@ -930,6 +939,10 @@ class ColorParameter(MultiFloatParameter):
 
     def _init_ui(self) -> None:
         super()._init_ui()
+
+        for line in self.lines:
+            line.set_maximum(self._color_max)
+
         self.button = QtWidgets.QPushButton()
         self.button.clicked.connect(self.select_color)
         self.button.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
@@ -1419,6 +1432,7 @@ class RatioButton(QtWidgets.QPushButton):
         size = self.iconSize().width()
         self.setMaximumSize(QtCore.QSize(size, size))
         self.setCheckable(True)
+        self._checked_change(False)
 
     def _checked_change(self, checked: bool) -> None:
         # BUG: fusion style does not recognize On/Off for QIcons
