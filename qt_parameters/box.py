@@ -28,7 +28,7 @@ class CollapsibleBox(QtWidgets.QFrame):
         self._collapsed = False
         self._checkable = False
         self._collapsible = False
-        self._style = CollapsibleBox.SIMPLE
+        self._style = CollapsibleBox.Style.SIMPLE
 
         self.header = None
         self.title_label = None
@@ -140,7 +140,7 @@ class CollapsibleBox(QtWidgets.QFrame):
         self.frame.setLayout(layout)
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
-        if not self._style == CollapsibleBox.BUTTON:
+        if not self._style == CollapsibleBox.Style.BUTTON:
             return super().paintEvent(event)
 
         option = QtWidgets.QStyleOptionButton()

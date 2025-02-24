@@ -197,7 +197,7 @@ class WidgetGallery(QtWidgets.QWidget):
 
         # Boxes
         box = parameter_form.add_group('box_button_style', 'Box (Button Style)')
-        box.set_box_style(ParameterBox.BUTTON)
+        box.set_box_style(ParameterBox.Style.BUTTON)
         form = box.form
 
         parm = IntParameter('int')
@@ -205,7 +205,7 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_parameter(parm)
 
         box = parameter_form.add_group('box_no_style', 'Box (No Style)')
-        box.set_box_style(ParameterBox.NONE)
+        box.set_box_style(ParameterBox.Style.NONE)
         form = box.form
 
         parm = IntParameter('int')

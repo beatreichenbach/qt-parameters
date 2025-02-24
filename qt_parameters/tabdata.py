@@ -337,24 +337,21 @@ class TabDataParameter(ParameterWidget):
     def decimals(self) -> int:
         return self._decimals
 
-    def headers(self) -> tuple | None:
-        return self._headers
-
-    def types(self) -> tuple | None:
-        return self._types
-
-    def start_index(self) -> int:
-        return self._start_index
-
     def set_decimals(self, decimals: int) -> None:
         self._decimals = decimals
         for delegate in self._delegates:
             if isinstance(delegate, FloatDelegate):
                 delegate.decimals = decimals
 
+    def headers(self) -> tuple | None:
+        return self._headers
+
     def set_headers(self, headers: Sequence | None) -> None:
         self._headers = headers
         self.update_horizontal_headers()
+
+    def types(self) -> tuple | None:
+        return self._types
 
     def set_types(self, types: Sequence | None) -> None:
         self._types = types
@@ -377,6 +374,9 @@ class TabDataParameter(ParameterWidget):
             self.view.setItemDelegateForColumn(i, delegate)
             self._delegates.append(delegate)
 
+    def start_index(self) -> int:
+        return self._start_index
+
     def set_start_index(self, start_index: int) -> None:
         self._start_index = start_index
         self.update_vertical_headers()
@@ -394,6 +394,9 @@ class TabDataParameter(ParameterWidget):
         rows = range(self._start_index, self.model.rowCount() + self._start_index)
         labels = tuple(map(str, rows))
         self.model.setVerticalHeaderLabels(labels)
+
+    def value(self) -> tuple:
+        return super().value()
 
     def set_value(self, value: Sequence | None) -> None:
         self.model.clear()

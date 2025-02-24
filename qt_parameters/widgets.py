@@ -5,16 +5,16 @@ import math
 from collections.abc import Sequence, Mapping, Collection
 from enum import Enum, IntEnum, auto, EnumMeta
 from functools import partial
-from typing import Any, Callable, Optional
-
-from qtpy import QtCore, QtGui, QtWidgets
+from typing import Any, Callable
 
 from qt_material_icons import MaterialIcon
+from qtpy import QtCore, QtGui, QtWidgets
 
 from . import utils
 from .resizegrip import ResizeGrip
 
 SUCCESS = 25
+MIN_SLIDER_WIDTH = 200
 
 
 class ParameterWidget(QtWidgets.QWidget):
@@ -112,21 +112,21 @@ class IntParameter(ParameterWidget):
     _default: int = 0
     _slider_min: int = 0
     _slider_max: int = 10
-    _line_min: Optional[int] = None
-    _line_max: Optional[int] = None
+    _line_min: int | None = None
+    _line_max: int | None = None
     _slider_visible: bool = True
     _commit_on_edit: bool = False
 
     def _init_ui(self) -> None:
-        # line
+        # Line
         self.line = IntLineEdit(self)
         self.line.value_changed.connect(self._line_value_changed)
         self._layout.addWidget(self.line)
 
-        # slider
+        # Slider
         self.slider = IntSlider()
         self.slider.value_changed.connect(self._slider_value_changed)
-        # prevent any size changes when slider shows
+        # Prevent any size changes when slider shows
         self.slider.setMaximumHeight(self.line.minimumSizeHint().height())
         self._layout.addWidget(self.slider)
         self._layout.setStretch(1, 1)
@@ -140,52 +140,52 @@ class IntParameter(ParameterWidget):
     def commit_on_edit(self) -> bool:
         return self._commit_on_edit
 
-    def line_min(self) -> int:
-        return self._line_min
-
-    def line_max(self) -> int:
-        return self._line_max
-
-    def slider_min(self) -> int:
-        return self._slider_min
-
-    def slider_max(self) -> int:
-        return self._slider_max
-
-    def slider_visible(self) -> bool:
-        return self._slider_visible
-
     def set_commit_on_edit(self, commit_on_edit: bool) -> None:
         self._commit_on_edit = commit_on_edit
         self.line.commit_on_edit = commit_on_edit
 
-    def set_line_min(self, line_min: Optional[int]) -> None:
+    def line_min(self) -> int | None:
+        return self._line_min
+
+    def set_line_min(self, line_min: int | None) -> None:
         self._line_min = line_min
         self.line.set_minimum(line_min)
 
-    def set_line_max(self, line_max: Optional[int]) -> None:
+    def line_max(self) -> int | None:
+        return self._line_max
+
+    def set_line_max(self, line_max: int | None) -> None:
         self._line_max = line_max
         self.line.set_maximum(line_max)
+
+    def slider_min(self) -> int:
+        return self._slider_min
 
     def set_slider_min(self, slider_min: int) -> None:
         self._slider_min = slider_min
         self.slider.set_minimum(slider_min)
 
+    def slider_max(self) -> int:
+        return self._slider_max
+
     def set_slider_max(self, slider_max: int) -> None:
         self._slider_max = slider_max
         self.slider.set_maximum(slider_max)
+
+    def slider_visible(self) -> bool:
+        return self._slider_visible
 
     def set_slider_visible(self, slider_visible: bool) -> None:
         self._slider_visible = slider_visible
         self._toggle_slider(slider_visible)
 
+    def value(self) -> int:
+        return super().value()
+
     def set_value(self, value: int) -> None:
         super().set_value(value)
         self._set_line_value(value)
         self._set_slider_value(value)
-
-    def value(self) -> int:
-        return super().value()
 
     def _line_value_changed(self, value: int) -> None:
         super().set_value(value)
@@ -206,7 +206,7 @@ class IntParameter(ParameterWidget):
         self.slider.blockSignals(False)
 
     def _toggle_slider(self, value: bool) -> None:
-        has_space = self.size().width() > 200
+        has_space = self.size().width() > MIN_SLIDER_WIDTH
         self.slider.setVisible(self._slider_visible and value and has_space)
 
 
@@ -217,8 +217,8 @@ class FloatParameter(IntParameter):
     _default: float = 0
     _slider_min: float = 0
     _slider_max: float = 1
-    _line_min: Optional[float] = None
-    _line_max: Optional[float] = None
+    _line_min: float | None = None
+    _line_max: float | None = None
     _decimals: int = 4
 
     def _init_ui(self) -> None:
@@ -240,39 +240,39 @@ class FloatParameter(IntParameter):
     def decimals(self) -> int:
         return self._decimals
 
-    def line_min(self) -> float:
-        return super().line_min()
-
-    def line_max(self) -> float:
-        return super().line_max()
-
-    def slider_min(self) -> float:
-        return super().slider_min()
-
-    def slider_max(self) -> float:
-        return super().slider_max()
-
     def set_decimals(self, decimals: int) -> None:
         self._decimals = decimals
         self.line.set_decimals(decimals)
 
-    def set_line_min(self, line_min: Optional[float]) -> None:
+    def line_min(self) -> float:
+        return super().line_min()
+
+    def set_line_min(self, line_min: float | None) -> None:
         super().set_line_min(line_min)
 
-    def set_line_max(self, line_max: Optional[float]) -> None:
+    def line_max(self) -> float:
+        return super().line_max()
+
+    def set_line_max(self, line_max: float | None) -> None:
         super().set_line_max(line_max)
+
+    def slider_min(self) -> float:
+        return super().slider_min()
 
     def set_slider_min(self, slider_min: float) -> None:
         super().set_slider_min(slider_min)  # noqa
 
+    def slider_max(self) -> float:
+        return super().slider_max()
+
     def set_slider_max(self, slider_max: float) -> None:
         super().set_slider_max(slider_max)  # noqa
 
-    def set_value(self, value: float) -> None:
-        super().set_value(value)  # noqa
-
     def value(self) -> float:
         return super().value()
+
+    def set_value(self, value: float) -> None:
+        super().set_value(value)  # noqa
 
 
 class StringParameter(ParameterWidget):
@@ -280,9 +280,9 @@ class StringParameter(ParameterWidget):
 
     _value: str = ''
     _default: str = ''
-    _area: bool = False
-    _menu: Mapping | Sequence[str] | None = None
     _placeholder: str = ''
+    _area: bool = False
+    _menu: Collection | None = None
 
     def _init_ui(self) -> None:
         self._init_text()
@@ -313,13 +313,13 @@ class StringParameter(ParameterWidget):
             self.text.deleteLater()
             self._init_text()
 
-    def menu(self) -> Mapping | Sequence[str] | None:
+    def menu(self) -> Collection | None:
         return self._menu
 
-    def set_menu(self, menu: Mapping | Sequence[str] | None) -> None:
+    def set_menu(self, menu: Collection | None) -> None:
         self._menu = menu
 
-        # update menu
+        # Update menu
         if not self._area and self._menu is not None:
             if not self.menu_button.defaultAction():
                 # build dynamically for optimization
@@ -338,6 +338,9 @@ class StringParameter(ParameterWidget):
         self._placeholder = placeholder
         self.text.setPlaceholderText(placeholder)
 
+    def value(self) -> str:
+        return super().value()
+
     def set_value(self, value: str) -> None:
         super().set_value(value)
         self.text.blockSignals(True)
@@ -347,13 +350,8 @@ class StringParameter(ParameterWidget):
             self.text.setText(value)
         self.text.blockSignals(False)
 
-    def value(self) -> str:
-        return super().value()
-
     def _build_menu(
-        self,
-        content: Mapping[str, ...] | Sequence[str],
-        menu: QtWidgets.QMenu | None = None,
+        self, content: Collection, menu: QtWidgets.QMenu | None = None
     ) -> QtWidgets.QMenu:
         if menu is None:
             menu = QtWidgets.QMenu(self)
@@ -399,8 +397,8 @@ class PathParameter(ParameterWidget):
 
     _value: str = ''
     _default: str = ''
-    _method: Method = OPEN_FILE
     _dir_fallback: str = ''
+    _method: Method = Method.OPEN_FILE
 
     def _init_ui(self) -> None:
         self.line = QtWidgets.QLineEdit()
@@ -417,24 +415,17 @@ class PathParameter(ParameterWidget):
 
     def browse(self) -> None:
         start_dir = self._value or self._dir_fallback
-        if self._method == PathParameter.OPEN_FILE:
+        if self._method == PathParameter.Method.OPEN_FILE:
             path, filters = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self,
-                caption='Open File',
-                dir=start_dir,
+                parent=self, caption='Open File', dir=start_dir
             )
-        elif self._method == PathParameter.SAVE_FILE:
+        elif self._method == PathParameter.Method.SAVE_FILE:
             path, filters = QtWidgets.QFileDialog.getSaveFileName(
-                parent=self,
-                caption='Save File',
-                dir=start_dir,
-                filter='*.*',
+                parent=self, caption='Save File', dir=start_dir, filter='*.*'
             )
-        elif self._method == PathParameter.EXISTING_DIR:
+        elif self._method == PathParameter.Method.EXISTING_DIR:
             path = QtWidgets.QFileDialog.getExistingDirectory(
-                parent=self,
-                caption='Select Directory',
-                dir=start_dir,
+                parent=self, caption='Select Directory', dir=start_dir
             )
         else:
             return
@@ -445,23 +436,23 @@ class PathParameter(ParameterWidget):
     def dir_fallback(self) -> str:
         return self._dir_fallback
 
-    def method(self) -> Method:
-        return self._method
-
     def set_dir_fallback(self, dir_fallback: str) -> None:
         self._dir_fallback = dir_fallback
 
+    def method(self) -> Method:
+        return self._method
+
     def set_method(self, method: Method) -> None:
         self._method = method
+
+    def value(self) -> str:
+        return super().value()
 
     def set_value(self, value: str) -> None:
         super().set_value(value)
         self.line.blockSignals(True)
         self.line.setText(value)
         self.line.blockSignals(False)
-
-    def value(self) -> str:
-        return super().value()
 
     def _editing_finished(self) -> None:
         value = self.line.text()
@@ -493,13 +484,16 @@ class ComboParameter(ParameterWidget):
             items = tuple(i if isinstance(i, tuple) else (i, i) for i in items)
 
         self._items = items
-        self._update_items()
+        self._refresh_items()
         try:
             default = items[0][1]
         except (IndexError, TypeError):
             default = None
         self.set_default(default)
         self.set_value(default)
+
+    def value(self) -> Any:
+        return super().value()
 
     def set_value(self, value: Any) -> None:
         index = self._index_from_value(value)
@@ -509,20 +503,9 @@ class ComboParameter(ParameterWidget):
         self.combo.setCurrentIndex(index)
         self.combo.blockSignals(False)
 
-    def value(self) -> Any:
-        return super().value()
-
     def _current_index_changed(self, index: int) -> None:
         value = self.combo.itemData(index)
         super().set_value(value)
-
-    def _update_items(self) -> None:
-        self.combo.blockSignals(True)
-        for index in reversed(range(self.combo.count())):
-            self.combo.removeItem(index)
-        for label, data in self._items:
-            self.combo.addItem(label, data)
-        self.combo.blockSignals(False)
 
     def _index_from_value(self, value: Any) -> int:
         """Return the index for a value, searching text and data."""
@@ -537,6 +520,14 @@ class ComboParameter(ParameterWidget):
         if index < 0:
             index = self.combo.findData(value)
         return index
+
+    def _refresh_items(self) -> None:
+        self.combo.blockSignals(True)
+        for index in reversed(range(self.combo.count())):
+            self.combo.removeItem(index)
+        for label, data in self._items:
+            self.combo.addItem(label, data)
+        self.combo.blockSignals(False)
 
 
 class EnumParameter(ParameterWidget):
@@ -558,9 +549,6 @@ class EnumParameter(ParameterWidget):
     def enum(self) -> EnumMeta:
         return self._enum
 
-    def formatter(self) -> Callable:
-        return self._formatter
-
     def set_enum(self, enum: EnumMeta) -> None:
         self._enum = enum
         self._update_items()
@@ -571,11 +559,17 @@ class EnumParameter(ParameterWidget):
         self.set_default(default)
         self.set_value(default)
 
+    def formatter(self) -> Callable:
+        return self._formatter
+
     def set_formatter(self, formatter: Callable) -> None:
         self._formatter = formatter
         index = self.combo.currentIndex()
         self._update_items()
         self.combo.setCurrentIndex(index)
+
+    def value(self) -> Enum | None:
+        return super().value()
 
     def set_value(self, value: Any) -> None:
         value = self._enum_from_value(value)
@@ -588,9 +582,6 @@ class EnumParameter(ParameterWidget):
             index = self.combo.findData(value.value)
         self.combo.setCurrentIndex(index)
         self.combo.blockSignals(False)
-
-    def value(self) -> Enum | None:
-        return super().value()
 
     def _current_index_changed(self, index: int) -> None:
         value = self.combo.itemData(index)
@@ -644,14 +635,14 @@ class BoolParameter(ParameterWidget):
         self._layout.addStretch()
         self.setFocusProxy(self.checkbox)
 
+    def value(self) -> bool:
+        return super().value()
+
     def set_value(self, value: bool) -> None:
         super().set_value(value)
         self.checkbox.blockSignals(True)
         self.checkbox.setChecked(value)
         self.checkbox.blockSignals(False)
-
-    def value(self) -> bool:
-        return super().value()
 
 
 class MultiIntParameter(IntParameter):
@@ -664,24 +655,24 @@ class MultiIntParameter(IntParameter):
     _ratio_visible: bool = True
 
     def _init_ui(self) -> None:
-        # lines
+        # Lines
         self.lines = []
-        for i in range(self.multi_count):
+        for i in range(self._count):
             line = IntLineEdit()
             line.value_changed.connect(self._line_value_changed)
             self._layout.addWidget(line)
             self.lines.append(line)
 
-        # slider
+        # Slider
         self.slider = IntSlider()
         self.slider.value_changed.connect(self._slider_value_changed)
-        # prevent any size changes when slider shows
+        # Prevent any size changes when slider shows
         line_height = self.lines[0].minimumSizeHint().height()
         self.slider.setMaximumHeight(line_height)
         self._layout.addWidget(self.slider)
         self._layout.setStretch(self.multi_count, 1)
 
-        # keep ratio button
+        # Keep ratio button
         self.keep_ratio_button = RatioButton()
         self.keep_ratio_button.setMaximumSize(line_height, line_height)
         self.keep_ratio_button.toggled.connect(self.set_keep_ratio)
@@ -726,6 +717,9 @@ class MultiIntParameter(IntParameter):
         if not ratio_visible:
             self.set_keep_ratio(False)
 
+    def value(self) -> tuple[int, ...]:
+        return ParameterWidget.value(self)
+
     def set_value(self, value: Sequence) -> None:
         if isinstance(value, Sequence):
             values = value
@@ -741,9 +735,6 @@ class MultiIntParameter(IntParameter):
         self._set_slider_value(values[0])
         self._set_line_values(values)
 
-    def value(self) -> tuple[int, ...]:
-        return ParameterWidget.value(self)
-
     def _line_value_changed(self, value: int) -> None:
         if self._keep_ratio:
             values = (self.lines[0].value(),) * self.multi_count
@@ -755,12 +746,6 @@ class MultiIntParameter(IntParameter):
         value = self._cast_to_type(values)
         ParameterWidget.set_value(self, value)
         self._set_slider_value(values[0])
-
-    def _cast_to_tuple(self, values: Any) -> tuple[int, ...]:
-        return values
-
-    def _cast_to_type(self, values: tuple[int, ...]) -> Any:
-        return values
 
     def _slider_value_changed(self, value: int) -> None:
         values = (value,) * self.multi_count
@@ -774,12 +759,17 @@ class MultiIntParameter(IntParameter):
             line.set_value(value)
             line.blockSignals(False)
 
+    def _cast_to_tuple(self, values: Any) -> tuple[int, ...]:
+        return values
+
+    def _cast_to_type(self, values: tuple[int, ...]) -> Any:
+        return values
 
 class MultiFloatParameter(MultiIntParameter):
     _value: tuple[float, ...] = (0, 0)
     _default: tuple[float, ...] = (0, 0)
-    _line_min: Optional[float] = None
-    _line_max: Optional[float] = None
+    _line_min: float | None = None
+    _line_max: float | None = None
     _slider_min: float = 0
     _slider_max: float = 1
     _decimals: int = 4
@@ -821,33 +811,32 @@ class MultiFloatParameter(MultiIntParameter):
     def line_min(self) -> float:
         return super().line_min()
 
-    def line_max(self) -> float:
-        return super().line_max()
-
-    def slider_min(self) -> float:
-        return super().slider_min()
-
-    def slider_max(self) -> float:
-        return super().slider_max()
-
     def set_line_min(self, line_min: float) -> None:
         super().set_line_min(line_min)  # noqa
+
+    def line_max(self) -> float:
+        return super().line_max()
 
     def set_line_max(self, line_max: float) -> None:
         super().set_line_max(line_max)  # noqa
 
+    def slider_min(self) -> float:
+        return super().slider_min()
+
     def set_slider_min(self, slider_min: float) -> None:
         super().set_slider_min(slider_min)  # noqa
+
+    def slider_max(self) -> float:
+        return super().slider_max()
 
     def set_slider_max(self, slider_max: float) -> None:
         super().set_slider_max(slider_max)  # noqa
 
-    def set_value(self, value: tuple[float, ...]) -> None:
-        super().set_value(value)
-
     def value(self) -> tuple[float, ...]:
         return super().value()
 
+    def set_value(self, value: tuple[float, ...]) -> None:
+        super().set_value(value)
 
 class PointParameter(MultiIntParameter):
     value_changed: QtCore.Signal = QtCore.Signal(QtCore.QPoint)
@@ -935,8 +924,8 @@ class ColorParameter(MultiFloatParameter):
 
     _value: QtGui.QColor = QtGui.QColor(0, 0, 0)
     _default: QtGui.QColor = QtGui.QColor(0, 0, 0)
-    _color_min: Optional[float] = 0
-    _color_max: Optional[float] = 1
+    _color_min: float | None = 0
+    _color_max: float | None = 1
     _decimals: int = 2
 
     def _init_ui(self) -> None:
@@ -951,36 +940,34 @@ class ColorParameter(MultiFloatParameter):
     def color_min(self) -> float:
         return self._color_min
 
+    def set_color_min(self, color_min: float) -> None:
+        self._color_min = color_min
+        for line in self.lines:
+            line.set_minimum(self._color_min)  # noqa
+
     def color_max(self) -> float:
         return self._color_max
 
+    def set_color_max(self, color_max: float) -> None:
+        self._color_max = color_max
+        for line in self.lines:
+            line.set_maximum(self._color_max)  # noqa
+
     def select_color(self) -> None:
-        color = QtWidgets.QColorDialog.getColor(
-            initial=self._value,
-            options=QtWidgets.QColorDialog.ColorDialogOption.DontUseNativeDialog,
-        )
+        options = QtWidgets.QColorDialog.ColorDialogOption.DontUseNativeDialog
+        color = QtWidgets.QColorDialog.getColor(initial=self._value, options=options)
         if color.isValid():
             super().set_value(color)  # noqa
             values = self._cast_to_tuple(color)
             self._set_line_values(values)  # noqa
             self._set_button_value(color)
 
-    def set_color_min(self, color_min: float) -> None:
-        self._color_min = color_min
-        for line in self.lines:
-            line.set_minimum(self._color_min)
-
-    def set_color_max(self, color_max: float) -> None:
-        self._color_max = color_max
-        for line in self.lines:
-            line.set_maximum(self._color_max)
+    def value(self) -> QtGui.QColor:
+        return super().value()  # noqa
 
     def set_value(self, value: QtGui.QColor | Sequence) -> None:
         super().set_value(value)  # noqa
         self._set_button_value(self._value)
-
-    def value(self) -> QtGui.QColor:
-        return super().value()  # noqa
 
     def _cast_to_type(self, values: tuple[float, ...]) -> QtGui.QColor:
         return QtGui.QColor.fromRgbF(*values[:3])
@@ -1060,13 +1047,13 @@ class IntLineEdit(QtWidgets.QLineEdit):
     def minimum(self) -> int:
         return self._minimum
 
-    def set_minimum(self, minimum: Optional[int]) -> None:
+    def set_minimum(self, minimum: int | None) -> None:
         if minimum is None:
             minimum = self._abs_minimum
         self._minimum = minimum
         self._validator.setBottom(minimum)
 
-    def set_maximum(self, maximum: Optional[int]) -> None:
+    def set_maximum(self, maximum: int | None) -> None:
         if maximum is None:
             maximum = self._abs_maximum
         self._maximum = maximum
@@ -1530,7 +1517,7 @@ class Label(QtWidgets.QWidget):
         try:
             import qt_themes
         except ImportError:
-            return
+            return None
 
         if theme := qt_themes.get_theme():
             return getattr(theme, name, None)
