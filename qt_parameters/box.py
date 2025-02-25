@@ -103,6 +103,7 @@ class CollapsibleBox(QtWidgets.QFrame):
         self.frame = QtWidgets.QFrame(self)
         self._layout.addWidget(self.frame)
         self._layout.setStretch(1, 1)
+        self.checkbox.toggled.connect(self.frame.setEnabled)
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.title()!r})'
@@ -190,6 +191,10 @@ class CollapsibleBox(QtWidgets.QFrame):
     def set_checkable(self, checkable: bool) -> None:
         self._checkable = checkable
         self.checkbox.setVisible(checkable)
+        if checkable:
+            self.frame.setEnabled(self.checkbox.isChecked())
+        else:
+            self.checkbox.setChecked(False)
 
     def set_checked(self, checked: bool) -> None:
         if self.checkable():
