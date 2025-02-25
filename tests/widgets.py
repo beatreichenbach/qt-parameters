@@ -18,7 +18,6 @@ from qt_parameters import (
     Label,
     MultiFloatParameter,
     MultiIntParameter,
-    ParameterBox,
     ParameterForm,
     PathParameter,
     PointFParameter,
@@ -38,7 +37,8 @@ class WidgetGallery(QtWidgets.QWidget):
         self._init_ui()
 
         for form in self.forms:
-            logging.debug(json.dumps(form.values(), indent=4, default=lambda x: str(x)))
+            values = form.values()
+            logging.debug(json.dumps(values, indent=4, default=lambda x: str(x)))
             form.parameter_changed.connect(lambda p: logging.debug(p.value()))
 
             state = form.state()
@@ -59,12 +59,12 @@ class WidgetGallery(QtWidgets.QWidget):
         self.forms.append(parameter_form)
 
         # Numbers
-        box = parameter_form.add_group('Numbers')
-        form = box.form
+        form = ParameterForm('numbers')
+        box = parameter_form.add_form(form)
 
         action = QtGui.QAction('Reset', form)
         action.triggered.connect(partial(form.reset, None))
-        form.addAction(action)
+        box.addAction(action)
 
         parm = IntParameter('int')
         parm.set_line_min(10)
@@ -92,8 +92,8 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_parameter(parm)
 
         # Multi Number
-        box = parameter_form.add_group('Multi Numbers')
-        form = box.form
+        form = ParameterForm('multi_numbers')
+        parameter_form.add_form(form)
 
         parm = MultiIntParameter('multi_int')
         form.add_parameter(parm)
@@ -124,8 +124,8 @@ class WidgetGallery(QtWidgets.QWidget):
         # Custom Widgets
         parameter_form.add_separator()
 
-        box = parameter_form.add_group('Custom Widgets')
-        form = box.form
+        form = ParameterForm('custom_widgets')
+        parameter_form.add_form(form)
 
         button_layout = QtWidgets.QHBoxLayout()
         screenshot_button = QtWidgets.QPushButton('Screenshot')
@@ -145,8 +145,8 @@ class WidgetGallery(QtWidgets.QWidget):
         self.forms.append(parameter_form)
 
         # Strings
-        box = parameter_form.add_group('Strings')
-        form = box.form
+        form = ParameterForm('strings')
+        parameter_form.add_form(form)
 
         parm = StringParameter('string')
         parm.set_placeholder('Placeholder ...')
@@ -173,9 +173,9 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_widget(label)
 
         # Options
-        box = parameter_form.add_group('Options')
+        form = ParameterForm('options')
+        box = parameter_form.add_form(form)
         box.set_collapsible(False)
-        form = box.form
 
         parm = ComboParameter('combo')
         parm.set_items(('Red', 'Green', 'Blue'))
@@ -196,17 +196,19 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_parameter(parm)
 
         # Boxes
-        box = parameter_form.add_group('box_button_style', 'Box (Button Style)')
-        box.set_box_style(ParameterBox.Style.BUTTON)
-        form = box.form
+        form = ParameterForm('box_button_style')
+        box = parameter_form.add_form(form)
+        box.set_title('Box (Button Style)')
+        box.set_box_style(CollapsibleBox.Style.BUTTON)
 
         parm = IntParameter('int')
         parm.set_default(10)
         form.add_parameter(parm)
 
-        box = parameter_form.add_group('box_no_style', 'Box (No Style)')
-        box.set_box_style(ParameterBox.Style.NONE)
-        form = box.form
+        form = ParameterForm('box_no_style')
+        box = parameter_form.add_form(form)
+        box.set_title('Box (No Style)')
+        box.set_box_style(CollapsibleBox.Style.NONE)
 
         parm = IntParameter('int')
         parm.set_default(10)
@@ -218,8 +220,8 @@ class WidgetGallery(QtWidgets.QWidget):
         self.forms.append(parameter_form)
 
         # Checkable
-        box = parameter_form.add_group('Checkable Parameters')
-        form = box.form
+        form = ParameterForm('checkable_parameters')
+        parameter_form.add_form(form, checkable=True)
 
         parm = IntParameter('int')
         parm.set_slider_min(10)
@@ -238,11 +240,10 @@ class WidgetGallery(QtWidgets.QWidget):
 
         parm = SizeParameter('sizef')
         form.add_parameter(parm, checkable=True)
-        form.widgets()['sizef_enabled'].set_value(True)
 
         # TabData
-        box = parameter_form.add_group('tabdata')
-        form = box.form
+        form = ParameterForm('tabdata')
+        parameter_form.add_form(form)
 
         data = [
             ['Sun', 696000, 198],
@@ -259,19 +260,30 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_parameter(parm, alignment=QtCore.Qt.AlignmentFlag.AlignTop)
 
         # Tab Group
-        tab = parameter_form.add_tab_group(['tab_1', 'tab_2'])
-        tab_1 = tab.tabs['tab_1']
+        tab_1 = ParameterForm('tab_1')
+        tab_2 = ParameterForm('tab_2')
+        parameter_form.add_forms((tab_1, tab_2))
         tab_1.add_parameter(IntParameter('int'))
         tab_1.add_parameter(StringParameter('string'))
         tab_1.add_parameter(BoolParameter('bool'))
         tab_1.add_parameter(ComboParameter('combo'))
 
         # Boxes
-        box = parameter_form.add_group('collapsed_box_button', 'Collapsed Box (Button)')
+        form = ParameterForm('collapsed_box_button')
+        box = parameter_form.add_form(form)
+        box.set_title('Collapsed Box (Button)')
         box.set_box_style(CollapsibleBox.Style.BUTTON)
         box.set_collapsed(True)
-        box = parameter_form.add_group('collapsed_box_simple', 'Collapsed Box (Simple)')
+
+        form = ParameterForm('collapsed_box_simple')
+        box = parameter_form.add_form(form)
+        box.set_title('Collapsed Box (Simple)')
         box.set_collapsed(True)
+
+        form.add_parameter(BoolParameter('bool'))
+        label = Label()
+        label.set_text('asdf')
+        form.add_widget(label)
 
     def _screenshot(self) -> None:
         path = os.path.join('..', '.github', 'assets', f'editor.png')

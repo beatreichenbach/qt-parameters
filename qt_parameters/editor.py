@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import itertools
-import typing
-from collections.abc import Iterable, Sequence
-from functools import partial
+from collections.abc import Sequence
+from typing import Any
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -88,85 +86,126 @@ class ParameterLabel(QtWidgets.QLabel):
             self._tooltip.show()
 
 
-class ParameterTabWidget(QtWidgets.QTabWidget):
-    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.tabs: dict[str, ParameterForm] = {}
-
-
-class ParameterBox(CollapsibleBox):
-    def __init__(
-        self, title: str, form: ParameterForm, parent: QtWidgets.QWidget | None = None
-    ) -> None:
-        super().__init__(title, parent)
-        self.form = form
-
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self.layout().setContentsMargins(QtCore.QMargins())
-        self.layout().setSpacing(0)
-        self.layout().addWidget(form)
-
-
 class ParameterForm(QtWidgets.QWidget):
-    actions_changed: QtCore.Signal = QtCore.Signal(tuple)
     parameter_changed: QtCore.Signal = QtCore.Signal(ParameterWidget)
 
-    # Require unique names in the whole hierarchy
-    unique_hierarchical_names: bool = False
-
-    # Return values as nested dict or flat hierarchy
-    create_hierarchy: bool = True
-
-    def __init__(
-        self,
-        name: str | None = None,
-        root: ParameterForm | None = None,
-        parent: QtWidgets.QWidget | None = None,
-    ) -> None:
+    def __init__(self, name: str = '', parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
         self._widgets: dict[str, QtWidgets.QWidget] = {}
+        self._name = name
+        self._root = self
+        self._flat = False
+        self._unique_names = False
 
-        self.name = name
-        self.root = root or self
-        self._init_layout()
+        self._layout = QtWidgets.QGridLayout()
+        self.setLayout(self._layout)
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({repr(self.name)})'
+        return f'{self.__class__.__name__}({self._name!r})'
 
-    def _init_layout(self) -> None:
-        self.grid_layout = QtWidgets.QGridLayout()
-        self.setLayout(self.grid_layout)
+    def name(self) -> str:
+        return self._name
 
-    def actionEvent(self, event: QtGui.QActionEvent) -> None:
-        super().actionEvent(event)
-        actions = tuple(self.actions())
-        self.actions_changed.emit(actions)
+    def set_name(self, name: str) -> None:
+        self._name = name
 
-    def add_group(self, name: str, label: str = None) -> ParameterBox:
-        form = self._create_form(name)
-        form.parameter_changed.connect(self.parameter_changed.emit)
-        label = label or utils.title(name)
-        box = ParameterBox(label, form, self)
-        box.set_collapsible(True)
+    def flat(self) -> bool:
+        return self._flat
 
-        # Update CollapsibleBox with actions for the menu
-        form.actions_changed.connect(box.set_actions)
+    def set_flat(self, flat: bool) -> None:
+        """
+        If true, the form doesn't create a hierarchy when querying parameters or values.
+        """
+        self._flat = flat
 
-        self.add_widget(box)
-        return box
+    def unique_names(self) -> bool:
+        return self._unique_names
 
-    def add_layout(
-        self,
-        layout: QtWidgets.QLayout,
-        column: int = 1,
-        row_span: int = 1,
-        column_span: int = -1,
-    ) -> QtWidgets.QLayout:
-        row = self.grid_layout.rowCount() - 1
-        self.grid_layout.addLayout(layout, row, column, row_span, column_span)
-        self._update_stretch()
-        return layout
+    def set_unique_names(self, unique_names: bool) -> None:
+        """
+        If true, requires that all parameters have a unique name in the root's
+        hierarchy.
+        """
+        self._unique_names = unique_names
+
+    def root(self) -> ParameterForm:
+        return self._root
+
+    def set_root(self, root: ParameterForm) -> None:
+        """
+        Set the root which is used when checking for unique names in the hierarchy.
+        """
+        self._root = root
+
+    def state(self) -> dict:
+        """Return the state of the form as a dict."""
+
+        state = {}
+        if boxes := self._collapsed_boxes():
+            state['collapsed_boxes'] = boxes
+        for form in self.forms():
+            if form_state := form.state():
+                state[form.name] = form_state
+        return state
+
+    def set_state(self, state: dict) -> None:
+        """Load the state of the form from a dict."""
+
+        boxes = state.get('collapsed_boxes')
+        if boxes is not None:
+            self._set_collapsed_boxes(boxes)
+        for form in self.forms():
+            if form_state := state.get(form.name()):
+                form.set_state(form_state)
+
+    def values(self) -> dict[str, Any]:
+        """Return a dict of all values."""
+
+        widgets = self.widgets()
+        values = {}
+        for name, widget in widgets.items():
+            if isinstance(widget, ParameterWidget):
+                values[name] = widget.value()
+            elif isinstance(widget, ParameterForm):
+                values[name] = widget.values()
+            elif isinstance(widget, CollapsibleBox):
+                values[name] = widget.checked()
+        return values
+
+    def set_values(self, values: dict) -> None:
+        """Set the values of ParameterWidgets in the form from a dict."""
+
+        widgets = self.widgets()
+        for name, value in values.items():
+            widget = widgets.get(name)
+            if isinstance(widget, ParameterWidget):
+                widget.set_value(value)
+            elif isinstance(widget, ParameterForm):
+                widget.set_values(value)
+            elif isinstance(widget, CollapsibleBox):
+                widget.set_checked(value)
+
+    def set_defaults(self, values: dict) -> None:
+        """Set the default values of ParameterWidgets in the form from a dict."""
+
+        widgets = self.widgets()
+        for name, value in values.items():
+            widget = widgets.get(name)
+            if isinstance(widget, ParameterWidget):
+                widget.set_default(value)
+            elif isinstance(widget, ParameterForm):
+                widget.set_defaults(value)
+
+    def reset(self) -> None:
+        """Reset all parameters in this form to their default values."""
+
+        widgets = self.widgets()
+        for name, widget in widgets.items():
+            if isinstance(widget, (ParameterWidget, ParameterForm)):
+                widget.reset()
+            elif isinstance(widget, CollapsibleBox):
+                widget.set_checked(True)
 
     def add_parameter(
         self,
@@ -174,48 +213,112 @@ class ParameterForm(QtWidgets.QWidget):
         checkable: bool = False,
         alignment: QtCore.Qt.AlignmentFlag | None = None,
     ) -> ParameterWidget:
+        """Add a parameter to the ParameterForm's GridLayout."""
+
         name = widget.name()
         self._validate_name(name)
-
         self._widgets[name] = widget
 
-        row = self.grid_layout.rowCount() - 1
+        row = self._layout.rowCount() - 1
 
-        # checkbox
+        # Checkbox
         if checkable:
             checkbox_name = f'{name}_enabled'
             checkbox = BoolParameter(checkbox_name)
-            self.grid_layout.addWidget(checkbox, row, 0)
+            self._layout.addWidget(checkbox, row, 0)
             checkbox.set_value(False)
             widget.blockSignals(True)
             widget.setEnabled(False)
             widget.blockSignals(False)
-            checkbox.value_changed.connect(
-                partial(self._set_widget_row_enabled, checkbox)
-            )
+            checkbox.value_changed.connect(widget.setEnabled)
             checkbox.value_changed.connect(
                 lambda: self.parameter_changed.emit(checkbox)
             )
 
             self._widgets[checkbox_name] = checkbox
 
-        # label
+        # Label
         if widget.label():
             label = ParameterLabel(widget, self)
-            self.grid_layout.addWidget(label, row, 1)
-            widget.enabled_changed.connect(label.setEnabled)
             label.setEnabled(widget.isEnabled())
+            self._layout.addWidget(label, row, 1)
+            widget.enabled_changed.connect(label.setEnabled)
             if alignment:
                 label.setAlignment(alignment)
 
-        # widget
-        self.grid_layout.addWidget(widget, row, 2)
+        # Widget
+        self._layout.addWidget(widget, row, 2)
         widget.value_changed.connect(lambda: self.parameter_changed.emit(widget))
 
-        self._update_stretch()
+        self._refresh_stretch()
+        return widget
+
+    def add_form(self, form: ParameterForm, checkable: bool = False) -> CollapsibleBox:
+        """Add a form and return the CollapsibleBox."""
+
+        # Add child form
+        name = form.name()
+        self._validate_name(name)
+        self._widgets[name] = form
+        form.set_root(self)
+        form.parameter_changed.connect(self.parameter_changed)
+
+        # Add CollapsibleBox
+        label = utils.title(name)
+        box = CollapsibleBox(label)
+        box.set_collapsible(True)
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(QtCore.QMargins())
+        layout.setSpacing(0)
+        layout.addWidget(form)
+        box.setLayout(layout)
+
+        if checkable:
+            box.set_checkable(checkable)
+            self._widgets[f'{name}_enabled'] = box
+
+        self.add_widget(box)
+
+        return box
+
+    def add_forms(self, forms: Sequence[ParameterForm]) -> QtWidgets.QTabWidget:
+        """Add multiple forms and return the TabWidget."""
+
+        # Validate all names first
+        for form in forms:
+            self._validate_name(form.name())
+
+        tab_widget = QtWidgets.QTabWidget()
+        for form in forms:
+            name = form.name()
+            self._widgets[name] = form
+            form.set_root(self)
+            form.parameter_changed.connect(self.parameter_changed)
+
+            label = utils.title(name)
+            tab_widget.addTab(form, label)
+
+        self.add_widget(tab_widget)
+
+        return tab_widget
+
+    def add_widget(
+        self, widget: QtWidgets.QWidget, column: int = 1, column_span: int = -1
+    ) -> QtWidgets.QWidget:
+        """Add a widget to the ParameterForm's GridLayout."""
+
+        row = self._layout.rowCount() - 1
+        row_span = 1
+        if column_span == -1 and self._layout.columnCount() < 2:
+            # In case the layout doesn't have any columns yet, default to 3 columns.
+            column_span = 2
+        self._layout.addWidget(widget, row, column, row_span, column_span)
+        self._refresh_stretch()
         return widget
 
     def add_separator(self) -> QtWidgets.QFrame:
+        """Add a horizontal separator to the ParameterForm's GridLayout."""
+
         line = QtWidgets.QFrame(self)
         line.setFixedHeight(1)
         line.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
@@ -224,255 +327,251 @@ class ParameterForm(QtWidgets.QWidget):
         self.add_widget(line)
         return line
 
-    def add_tab_group(
-        self, names: Iterable[str], labels: Iterable[str] = None
-    ) -> ParameterTabWidget:
-        tab_widget = ParameterTabWidget(self)
-        tab_widget.tabs = {}
-        labels = labels or []
-        for name, label in itertools.zip_longest(names, labels):
-            form = self._create_form(name)
-            form.parameter_changed.connect(self.parameter_changed.emit)
-            label = label or utils.title(name)
-            tab_widget.addTab(form, label)
-            tab_widget.tabs[name] = form
-
-        self.add_widget(tab_widget)
-        return tab_widget
-
-    def add_widget(
-        self, widget: QtWidgets.QWidget, column: int = 1, column_span: int = -1
-    ) -> QtWidgets.QWidget:
-        row = self.grid_layout.rowCount() - 1
-        row_span = 1
-        self.grid_layout.addWidget(widget, row, column, row_span, column_span)
-        self._update_stretch()
-        return widget
-
-    def groups(self) -> dict:
-        """
-        Create hierarchical dict of boxes, groups and tab widgets.
-        """
-
-        group_dict = {}
-        for index in range(self.grid_layout.count()):
-            widget = self.grid_layout.itemAt(index).widget()
-            if isinstance(widget, ParameterBox):
-                if widget.form:
-                    group_dict[widget] = widget.form.groups()
-            elif isinstance(widget, ParameterForm):
-                group_dict.update(widget.groups())
-            elif isinstance(widget, ParameterTabWidget):
-                for form in widget.tabs.values():
-                    group_dict[form] = form.groups()
-
-        return group_dict
-
-    def reset(self, widgets: dict[str, ParameterWidget] | None = None) -> None:
-        if widgets is None:
-            widgets = self.widgets()
-
-        for value in widgets.values():
-            if isinstance(value, ParameterWidget):
-                value.reset()
-            elif isinstance(value, dict):
-                self.reset(value)
-
-    def set_state(self, state: dict) -> None:
-        values = {'expanded_boxes': []}
-        values.update(state)
-        expanded_boxes = values['expanded_boxes']
-        self._set_expanded_boxes(expanded_boxes)
-
-    def set_values(
+    def add_layout(
         self,
-        values: dict,
-        widgets: dict[str, ParameterWidget] | None = None,
-        attr: str = 'value',
-    ) -> None:
-        if widgets is None:
-            widgets = self.widgets()
-        for key, value in values.items():
-            if key not in widgets:
-                continue
-            widget = widgets[key]
-            if isinstance(widget, dict):
-                self.set_values(value, widget, attr)
-            else:
-                try:
-                    setter = getattr(widget, f'set_{attr}')
-                except AttributeError:
-                    continue
-                setter(value)
+        layout: QtWidgets.QLayout,
+        column: int = 1,
+        row_span: int = 1,
+        column_span: int = -1,
+    ) -> QtWidgets.QLayout:
+        """Add a layout to the ParameterForm's GridLayout."""
 
-    def state(self) -> dict:
-        expanded_boxes = self._expanded_boxes()
-        state = {'expanded_boxes': expanded_boxes}
-        return state
+        row = self._layout.rowCount() - 1
+        if column_span == -1 and self._layout.columnCount() < 2:
+            # In case the layout doesn't have any columns yet, default to 3 columns.
+            column_span = 2
+        self._layout.addLayout(layout, row, column, row_span, column_span)
+        self._refresh_stretch()
+        return layout
 
-    def values(self) -> dict[str, typing.Any]:
-        """
-        Create nested dictionary of all Parameter values.
-        """
+    def clear(self) -> None:
+        """Clear the form from all parameters, widgets and forms."""
 
-        values = {}
-        for name, widget in self._widgets.items():
-            if isinstance(widget, ParameterForm):
-                if widget.create_hierarchy:
-                    values[name] = widget.values()
+        for i in reversed(range(self._layout.count())):
+            if item := self._layout.itemAt(i):
+                if widget := item.widget():
+                    self._layout.removeWidget(widget)
+                    widget.deleteLater()
                 else:
-                    values.update(widget.values())
-            elif isinstance(widget, ParameterWidget):
-                values[name] = widget.value()
-        return values
+                    self._layout.removeItem(item)
+        self._widgets = {}
 
-    def widgets(self) -> dict[str, ParameterWidget]:
+    def remove_parameter(self, parameter: ParameterWidget) -> None:
+        """Remove and delete a parameter from the form."""
+
+        index = self._layout.indexOf(parameter)
+        if index < 0:
+            return
+        row, column, row_span, col_span = self._layout.getItemPosition(index)
+        for i in range(3):
+            if item := self._layout.itemAtPosition(row, i):
+                if widget := item.widget():
+                    self._layout.removeWidget(widget)
+                    widget.deleteLater()
+        self._refresh_stretch()
+
+    def remove_form(self, form: ParameterForm) -> None:
+        """Remove a form from the form. This does not remove box or tab widgets."""
+        name = form.name()
+        if name in self._widgets:
+            del self._widgets[name]
+        box_name = f'{name}_enabled'
+        if box_name in self._widgets:
+            del self._widgets[box_name]
+
+    def remove_widget(self, widget: QtWidgets.QWidget) -> None:
+        """Remove and delete a widget from the form."""
+
+        self._layout.removeWidget(widget)
+        widget.deleteLater()
+        self._refresh_stretch()
+
+    def parameter(self, name: str) -> ParameterWidget | None:
         """
-        Create nested dictionary of all Parameter widgets.
+        Return the first ParameterWidget with name `name`.
+
+        The `name` follows the attribute naming scheme, meaning nested parameters can
+        be accessed with name = 'parent.child'.
+        """
+
+        names = name.split('.')
+
+        widgets = self.widgets()
+        for n in names:
+            widget = widgets.get(n)
+            if isinstance(widget, ParameterForm):
+                widgets = widget.widgets()
+            elif isinstance(widget, ParameterWidget):
+                return widget
+            else:
+                break
+        return None
+
+    def parameters(self) -> tuple[ParameterWidget, ...]:
+        """Return all ParameterWidgets of this form."""
+
+        widgets = self.widgets().values()
+        parameters = tuple(w for w in widgets if isinstance(w, ParameterWidget))
+        return parameters
+
+    def form(self, name: str) -> ParameterForm | None:
+        """
+        Return the first ParameterForm with name `name`.
+
+        The `name` follows the attribute naming scheme, meaning nested forms can
+        be accessed with name = 'parent.child'.
+        """
+
+        names = name.split('.')
+
+        widgets = self.widgets()
+        for n in names:
+            widget = widgets.get(n)
+            if isinstance(widget, ParameterForm):
+                if n == names[-1]:
+                    return widget
+                else:
+                    widgets = widget.widgets()
+            else:
+                break
+        return None
+
+    def forms(self) -> tuple[ParameterForm, ...]:
+        """Return all ParameterForms of this form."""
+
+        widgets = self.widgets().values()
+        forms = tuple(w for w in widgets if isinstance(w, ParameterForm))
+        return forms
+
+    def boxes(self) -> tuple[CollapsibleBox, ...]:
+        """Return all CollapsibleBoxes of this form."""
+
+        boxes = []
+        for i in reversed(range(self._layout.count())):
+            if item := self._layout.itemAt(i):
+                if widget := item.widget():
+                    if isinstance(widget, CollapsibleBox):
+                        boxes.append(widget)
+        return tuple(boxes)
+
+    def widgets(self) -> dict:
+        """
+        Return a dict with all parameter widgets of the form and its children.
+        The dict will be flattened if the child forms are flat.
         """
 
         widgets = {}
         for name, widget in self._widgets.items():
             if isinstance(widget, ParameterForm):
-                if widget.create_hierarchy:
-                    widgets[name] = widget.widgets()
-                else:
+                if widget.flat():
                     widgets.update(widget.widgets())
+                else:
+                    widgets[widget.name()] = widget
             elif isinstance(widget, ParameterWidget):
-                widgets[name] = widget
+                widgets[widget.name()] = widget
+            elif isinstance(widget, CollapsibleBox):
+                widgets[widget.title()] = widget
         return widgets
 
-    def _expanded_boxes(self, groups: dict | None = None) -> tuple[str, ...]:
-        """
-        Returns a tuple of all expanded boxes.
-        Child boxes are separated by / 'parent/child/grand-child'.
-        """
-        if groups is None:
-            groups = self.groups()
+    @staticmethod
+    def checkbox(parameter: ParameterWidget) -> BoolParameter | None:
+        """Return the BoolParameter for a ParameterWidget `parameter` if it exists."""
 
-        expanded_boxes = []
-        for group, children in groups.items():
-            if isinstance(group, ParameterBox):
-                title = group.title()
-                if not group.collapsed():
-                    expanded_boxes.append(group.title())
-            elif isinstance(group, ParameterForm):
-                title = group.name
-            else:
-                continue
+        if parent := parameter.parentWidget():
+            layout = parent.layout()
+            if layout and isinstance(layout, QtWidgets.QGridLayout):
+                index = layout.indexOf(parameter)
+                if index >= 0:
+                    row, column, row_span, col_span = layout.getItemPosition(index)
+                    if item := layout.itemAtPosition(row, 0):
+                        if widget := item.widget():
+                            if isinstance(widget, BoolParameter):
+                                return widget
 
-            child_boxes = self._expanded_boxes(children)
-            child_boxes = ['/'.join([title, child]) for child in child_boxes]
-            expanded_boxes.extend(child_boxes)
-        return tuple(expanded_boxes)
+    @staticmethod
+    def label(parameter: ParameterWidget) -> ParameterLabel | None:
+        """Return the ParameterLabel for a ParameterWidget `parameter` if it exists."""
 
-    def _create_form(self, name) -> ParameterForm:
-        self._validate_name(name)
+        if parent := parameter.parentWidget():
+            layout = parent.layout()
+            if layout and isinstance(layout, QtWidgets.QGridLayout):
+                index = layout.indexOf(parameter)
+                if index >= 0:
+                    row, column, row_span, col_span = layout.getItemPosition(index)
+                    if item := layout.itemAtPosition(row, 1):
+                        if widget := item.widget():
+                            if isinstance(widget, ParameterLabel):
+                                return widget
 
-        form = ParameterForm(name=name, root=self)
-        # form.grid_layout.setContentsMargins(QtCore.QMargins(9, 9, 9, 9))
-        self._widgets[name] = form
+    def _collapsed_boxes(self) -> tuple[str, ...]:
+        """Return a tuple of all collapsed boxes."""
 
-        return form
+        boxes = []
+        for box in self.boxes():
+            if box.collapsed():
+                boxes.append(box.title())
+        return tuple(boxes)
 
-    def _hierarchical_names(self) -> tuple[str, ...]:
-        """
-        Returns a flat tuple of all child widget names.
-        """
+    def _set_collapsed_boxes(self, boxes: Sequence[str]) -> None:
+        """Collapse the boxes with title in `boxes`."""
+
+        for box in self.boxes():
+            if box.collapsible():
+                box.set_collapsed(box.title() in boxes)
+
+    def _refresh_stretch(self) -> None:
+        """Ensure the last column and row is expanding."""
+
+        self._layout.setColumnStretch(self._layout.columnCount() - 1, 1)
+        self._layout.setRowStretch(self._layout.rowCount() - 1, 0)
+        self._layout.setRowStretch(self._layout.rowCount(), 1)
+
+    def _names(self) -> tuple[str, ...]:
+        """Return a flat tuple of all child parameter's names."""
 
         names = []
         for name, widget in self._widgets.items():
             if isinstance(widget, ParameterForm):
-                names.extend(widget._hierarchical_names())
+                names.extend(widget._names())
             else:
                 names.append(name)
         return tuple(names)
 
-    def _set_expanded_boxes(
-        self, expanded_boxes: Sequence[str], groups: dict | None = None
-    ) -> None:
-        """
-        Collapses the boxes, child boxes are separated by dot 'parent.child'.
-        """
-
-        if groups is None:
-            groups = self.groups()
-
-        for group, children in groups.items():
-            if isinstance(group, ParameterBox):
-                group.set_collapsed(group.title() not in expanded_boxes)
-                title = group.title()
-            elif isinstance(group, ParameterForm):
-                title = group.name
-            else:
-                continue
-
-            child_boxes = [
-                b.split('.', 1)[-1]
-                for b in expanded_boxes
-                if b.split('/', 1)[0] == title
-            ]
-            self._set_expanded_boxes(child_boxes, children)
-
-    def _update_stretch(self) -> None:
-        self.grid_layout.setColumnStretch(self.grid_layout.columnCount() - 1, 1)
-        self.grid_layout.setRowStretch(self.grid_layout.rowCount() - 1, 0)
-        self.grid_layout.setRowStretch(self.grid_layout.rowCount(), 1)
-
     def _validate_name(self, name: str) -> None:
-        if name is None:
-            raise ValueError(f'Cannot add widget with name {name}')
+        """
+        Validates a parameter name, ensuring it does not already exist.
 
-        # check if name is unique relative to root
-        if self.root.unique_hierarchical_names:
-            hierarchical_names = self.root._hierarchical_names()
+        :raises ValueError: if the name is not valid.
+        """
+        if not name:
+            raise ValueError(f'name cannot be empty')
+
+        if self._root._unique_names:
+            names = self._root._names()
         else:
-            hierarchical_names = tuple(self._widgets.keys())
-        if name in hierarchical_names:
-            raise ValueError(f'Cannot add widget {name} (name already exists)')
+            names = self._widgets.keys()
 
-    @staticmethod
-    def _set_widget_row_enabled(widget: QtWidgets.QWidget, enabled: bool) -> None:
-        layout = widget.parentWidget().layout()
-        if isinstance(layout, QtWidgets.QGridLayout):
-            # find row of widget
-            index = layout.indexOf(widget)
-            if index < 0:
-                return
-            row, column, row_span, col_span = layout.getItemPosition(index)
-
-            # widget
-            item = layout.itemAtPosition(row, 2)
-            if not item or not item.widget():
-                return
-
-            item_widget = item.widget()
-            item_widget.setEnabled(enabled)
+        if name in names:
+            raise ValueError(f'name {name!r} is not unique')
 
 
 class ParameterEditor(ParameterForm):
-    def __init__(
-        self,
-        name: str | None = None,
-        root: ParameterEditor | None = None,
-        parent: QtWidgets.QWidget | None = None,
-    ) -> None:
-        super().__init__(name, root, parent)
+    """ParameterEditor is a ParameterForm in a VerticalScrollArea."""
 
-    def _init_layout(self) -> None:
-        # NOTE: Calling setLayout() when a layout is already set causes the application
-        #       to hang, so only call setLayout() once.
-        self._form = QtWidgets.QWidget()
+    def __init__(self, name: str = '', parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__(name=name, parent=parent)
 
-        self.scroll_area = VerticalScrollArea(self)
-        self.scroll_area.setWidget(self._form)
+        # Move the GridLayout to another widget first
+        widget = QtWidgets.QWidget()
+        widget.setLayout(self._layout)
 
-        self.grid_layout = QtWidgets.QGridLayout()
-        self._form.setLayout(self.grid_layout)
-
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self.layout().setContentsMargins(QtCore.QMargins())
-        self.layout().addWidget(self.scroll_area)
+        # Create the ScrollArea and add the widget
+        self.scroll_area = VerticalScrollArea()
+        self.scroll_area.setWidget(widget)
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(QtCore.QMargins())
+        layout.addWidget(self.scroll_area)
+        self.setLayout(layout)
 
     def sizeHint(self) -> QtCore.QSize:
         return self.scroll_area.sizeHint()

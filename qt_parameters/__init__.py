@@ -21,8 +21,6 @@ from .widgets import (
 from .editor import (
     ParameterToolTip,
     ParameterLabel,
-    ParameterTabWidget,
-    ParameterBox,
     ParameterForm,
     ParameterEditor,
 )
