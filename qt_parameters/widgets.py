@@ -3,8 +3,7 @@ from __future__ import annotations
 import logging
 import math
 from collections.abc import Sequence, Mapping, Collection
-from enum import Enum, IntEnum, auto, EnumMeta
-from functools import partial
+from enum import Enum, auto, EnumMeta
 from typing import Any, Callable
 
 from qt_material_icons import MaterialIcon
@@ -266,6 +265,10 @@ class FloatParameter(IntParameter):
 
 
 class StringParameter(ParameterWidget):
+    class MenuMode(Enum):
+        REPLACE = auto()
+        TOGGLE = auto()
+
     value_changed: QtCore.Signal = QtCore.Signal(str)
 
     _value: str = ''
@@ -273,6 +276,7 @@ class StringParameter(ParameterWidget):
     _placeholder: str = ''
     _area: bool = False
     _menu: Collection | None = None
+    _menu_mode: MenuMode = MenuMode.REPLACE
 
     def _init_ui(self) -> None:
         self._init_text()
@@ -321,6 +325,12 @@ class StringParameter(ParameterWidget):
         else:
             self.menu_button.hide()
 
+    def menu_mode(self) -> MenuMode:
+        return self._menu_mode
+
+    def set_menu_mode(self, mode: MenuMode) -> None:
+        self._menu_mode = mode
+
     def placeholder(self) -> str:
         return self._placeholder
 
@@ -340,6 +350,19 @@ class StringParameter(ParameterWidget):
             self.text.setText(value)
         self.text.blockSignals(False)
 
+    def _action_triggered(self, action: QtGui.QAction) -> None:
+        data = action.data()
+        value = str(data)
+        if self._menu_mode == StringParameter.MenuMode.REPLACE:
+            self.set_value(value)
+        elif self._menu_mode == StringParameter.MenuMode.TOGGLE:
+            values = self._value.split(' ')
+            if value in values:
+                values = (v for v in values if v != value)
+            else:
+                values.append(value)
+            self.set_value(' '.join(values))
+
     def _build_menu(
         self, content: Collection, menu: QtWidgets.QMenu | None = None
     ) -> QtWidgets.QMenu:
@@ -353,7 +376,8 @@ class StringParameter(ParameterWidget):
                 self._build_menu(data, sub_menu)
             else:
                 action = QtGui.QAction(label, self)
-                action.triggered.connect(partial(self.set_value, str(data)))
+                action.setData(data)
+                action.triggered.connect(lambda _, a=action: self._action_triggered(a))
                 menu.addAction(action)
         return menu
 
@@ -374,7 +398,7 @@ class StringParameter(ParameterWidget):
 
 
 class PathParameter(ParameterWidget):
-    class Method(IntEnum):
+    class Method(Enum):
         OPEN_FILE = auto()
         SAVE_FILE = auto()
         EXISTING_DIR = auto()

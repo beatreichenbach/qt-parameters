@@ -154,6 +154,7 @@ class WidgetGallery(QtWidgets.QWidget):
 
         parm = StringParameter('string_menu')
         parm.set_menu({'item_1': 1, 'item_2': 2})
+        parm.set_menu_mode(StringParameter.MenuMode.TOGGLE)
         form.add_parameter(parm)
 
         parm = StringParameter('area')
