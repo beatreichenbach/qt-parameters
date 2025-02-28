@@ -547,8 +547,13 @@ class ComboParameter(ParameterWidget):
 class EnumParameter(ParameterWidget):
     _value: Enum | None = None
     _default: Enum | None = None
-    _formatter: Callable = staticmethod(utils.title)
+    _formatter: Callable | None = None
     _enum: EnumMeta | None = None
+
+    def __init__(self, name: str = '', parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__(name=name, parent=parent)
+
+        self._formatter = lambda member: utils.title(member.name)
 
     def _init_ui(self) -> None:
         self.combo = QtWidgets.QComboBox()
@@ -631,7 +636,7 @@ class EnumParameter(ParameterWidget):
 
         if isinstance(self._enum, EnumMeta):
             for member in self._enum:
-                label = self._formatter(member.name)
+                label = self._formatter(member)
                 self.combo.addItem(label, member.value)
         self.combo.blockSignals(False)
 
