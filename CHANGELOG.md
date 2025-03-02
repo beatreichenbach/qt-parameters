@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.0.1 (2025-03-01)
+
+### Bug Fixes
+
+- **parameters**: Use member in enum formatter
+  ([`7d1a240`](https://github.com/beatreichenbach/qt-parameters/commit/7d1a240ce2ee125de01af0024753595044f68599))
+
+
 ## v1.0.0 (2025-02-26)
 
 ### Bug Fixes
