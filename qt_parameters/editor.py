@@ -466,11 +466,11 @@ class ParameterForm(QtWidgets.QWidget):
                 if widget.flat():
                     widgets.update(widget.widgets())
                 else:
-                    widgets[widget.name()] = widget
+                    widgets[name] = widget
             elif isinstance(widget, ParameterWidget):
-                widgets[widget.name()] = widget
+                widgets[name] = widget
             elif isinstance(widget, CollapsibleBox):
-                widgets[widget.title()] = widget
+                widgets[name] = widget
         return widgets
 
     @staticmethod
