@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.0.2 (2025-03-10)
+
+### Bug Fixes
+
+- **editor**: Use initial name for widgets
+  ([`a90ad88`](https://github.com/beatreichenbach/qt-parameters/commit/a90ad88950c3a0b7b4a77eb7f8b0528bd4d025d9))
+
+
 ## v1.0.1 (2025-03-01)
 
 ### Bug Fixes
