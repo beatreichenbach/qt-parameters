@@ -344,7 +344,7 @@ class StringParameter(ParameterWidget):
     def set_value(self, value: str) -> None:
         super().set_value(value)
         self.text.blockSignals(True)
-        if isinstance(self.text, QtWidgets.QTextEdit):
+        if isinstance(self.text, QtWidgets.QPlainTextEdit):
             self.text.setPlainText(value)
         elif isinstance(self.text, QtWidgets.QLineEdit):
             self.text.setText(value)
@@ -382,7 +382,7 @@ class StringParameter(ParameterWidget):
         return menu
 
     def _editing_finished(self) -> None:
-        if isinstance(self.text, QtWidgets.QTextEdit):
+        if isinstance(self.text, QtWidgets.QPlainTextEdit):
             super().set_value(self.text.toPlainText())
         elif isinstance(self.text, QtWidgets.QLineEdit):
             super().set_value(self.text.text())
