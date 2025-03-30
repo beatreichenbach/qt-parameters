@@ -83,7 +83,9 @@ class ResizeGrip(QtWidgets.QWidget):
         self._resizing = False
 
     def reset(self) -> None:
-        # reset size
+        """Reset the Size, SizePolicy, MaximumSize and MinimumSize attributes."""
+
+        # Size
         size = (
             self.parent()
             .style()
@@ -91,28 +93,32 @@ class ResizeGrip(QtWidgets.QWidget):
         )
         self.setFixedSize(size, size)
 
-        # reset sizePolicy
+        # SizePolicy
         if self._start_size_policy is not None:
             policy = self._start_size_policy
             self._start_size_policy = None
             self.parent().setSizePolicy(policy)
 
-        # reset maximumSize
+        # MaximumSize
         if self._start_max_size is not None:
             max_size = self._start_max_size
             self._start_max_size = None
             self.parent().setMaximumSize(max_size)
 
-        # reset minimumSize
+        # MinimumSize
         self.parent().setMinimumSize(self.parent().minimumSizeHint())
         self._min_size = None
 
     def reposition(self) -> None:
+        """Reposition the widget to the bottom right of the parent."""
+
         geometry = self.geometry()
         geometry.moveBottomRight(self.parent().contentsRect().bottomRight())
         self.setGeometry(geometry)
 
     def resize_scroll_bars(self) -> None:
+        """Resize the parent's ScrollBars."""
+
         parent = self.parent()
         if isinstance(parent, QtWidgets.QAbstractScrollArea):
             size = parent.contentsRect().size() - self.size()

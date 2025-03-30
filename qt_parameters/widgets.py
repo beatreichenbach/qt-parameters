@@ -290,7 +290,9 @@ class StringParameter(ParameterWidget):
         if self._area:
             self.text = TextEdit()
             self.text.editing_finished.connect(self._editing_finished)
-            ResizeGrip(self.text)
+            resize_grip = ResizeGrip(self.text)
+            # Initialize the ResizeGrip to allow resizing smaller
+            _ = resize_grip.min_size
         else:
             self.text = QtWidgets.QLineEdit()
             self.text.editingFinished.connect(self._editing_finished)
@@ -346,6 +348,7 @@ class StringParameter(ParameterWidget):
         self.text.blockSignals(True)
         if isinstance(self.text, QtWidgets.QPlainTextEdit):
             self.text.setPlainText(value)
+            self._refresh_height()
         elif isinstance(self.text, QtWidgets.QLineEdit):
             self.text.setText(value)
         self.text.blockSignals(False)
@@ -386,6 +389,19 @@ class StringParameter(ParameterWidget):
             super().set_value(self.text.toPlainText())
         elif isinstance(self.text, QtWidgets.QLineEdit):
             super().set_value(self.text.text())
+
+    def _refresh_height(self) -> None:
+        if isinstance(self.text, QtWidgets.QPlainTextEdit):
+            line_count = self.text.document().lineCount() + 1
+            metrics = self.text.fontMetrics()
+            line_spacing = metrics.lineSpacing()
+            height = (
+                line_count * line_spacing
+                + self.text.contentsMargins().top()
+                + self.text.contentsMargins().bottom()
+            )
+            height = max(height, self.text.minimumHeight())
+            self.text.setFixedHeight(height)
 
     def _show_menu(self) -> None:
         relative_pos = self.menu_button.rect().topRight()

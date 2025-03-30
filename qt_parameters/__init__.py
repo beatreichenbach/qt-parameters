@@ -1,5 +1,7 @@
 from .box import CollapsibleBox
+
 from .tabdata import TabDataParameter
+
 from .widgets import (
     ParameterWidget,
     IntParameter,
@@ -18,6 +20,12 @@ from .widgets import (
     ColorParameter,
     Label,
 )
+
+from .list import (
+    ListParameter,
+    StringListParameter,
+)
+
 from .editor import (
     ParameterToolTip,
     ParameterLabel,
