@@ -1,6 +1,24 @@
 # CHANGELOG
 
 
+## v1.1.0 (2025-03-30)
+
+### Bug Fixes
+
+- **parameters**: Correct type check
+  ([`6bdceb8`](https://github.com/beatreichenbach/qt-parameters/commit/6bdceb80dd5458d9ce53de60a520aed2e705a0e7))
+
+### Code Style
+
+- Update docstrings
+  ([`f41a9f6`](https://github.com/beatreichenbach/qt-parameters/commit/f41a9f6d52be987abd5c05f9393088cec3db4fd8))
+
+### Features
+
+- **parameters**: Add list parameters
+  ([`b4c9902`](https://github.com/beatreichenbach/qt-parameters/commit/b4c9902e2b18d8abd93650e06e41a898cf1a311b))
+
+
 ## v1.0.2 (2025-03-10)
 
 ### Bug Fixes
