@@ -266,7 +266,7 @@ class DragWidget(QtWidgets.QWidget):
 class ListParameter(ParameterWidget):
     _value: tuple = ()
     _default: tuple = ()
-    _factory: type[ParameterWidget | ParameterForm] | None = None
+    _factory: type[ParameterWidget | ParameterForm] | Callable | None = None
 
     def _init_ui(self) -> None:
         self.drag = DragWidget()
@@ -276,10 +276,12 @@ class ListParameter(ParameterWidget):
         self.setFocusProxy(self.drag)
         self._layout.addWidget(self.drag)
 
-    def factory(self) -> type[ParameterWidget | ParameterForm] | None:
+    def factory(self) -> type[ParameterWidget | ParameterForm] | Callable | None:
         return self._factory
 
-    def set_factory(self, factory: type[ParameterWidget | ParameterForm]) -> None:
+    def set_factory(
+        self, factory: type[ParameterWidget | ParameterForm] | Callable
+    ) -> None:
         self._factory = factory
         self.drag.set_factory(factory)
         self.drag.clear()

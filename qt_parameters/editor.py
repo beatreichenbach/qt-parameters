@@ -115,7 +115,7 @@ class ParameterForm(QtWidgets.QWidget):
 
     def set_flat(self, flat: bool) -> None:
         """
-        If true, the form doesn't create a hierarchy when querying parameters or values.
+        If True, the form doesn't create a hierarchy when querying parameters or values.
         """
         self._flat = flat
 
@@ -124,7 +124,7 @@ class ParameterForm(QtWidgets.QWidget):
 
     def set_unique_names(self, unique_names: bool) -> None:
         """
-        If true, requires that all parameters have a unique name in the root's
+        If True, requires that all parameters have a unique name in the root's
         hierarchy.
         """
         self._unique_names = unique_names

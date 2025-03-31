@@ -180,12 +180,11 @@ class DataTableView(QtWidgets.QTableView):
         self.horizontalHeader().setSectionsMovable(True)
         self.horizontalHeader().setStretchLastSection(True)
 
-        # header.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum
         )
 
-        # context menu
+        # Context menu
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_menu)
         self.context_menu = QtWidgets.QMenu(self)
@@ -214,7 +213,7 @@ class DataTableView(QtWidgets.QTableView):
         if not self.model():
             return
 
-        # create nested list from data
+        # Create nested list from data
         data = []
         row_data = []
         row = 0
@@ -227,7 +226,7 @@ class DataTableView(QtWidgets.QTableView):
         if row_data:
             data.append(row_data)
 
-        # copy to clipboard
+        # Copy to clipboard
         text = '\n'.join('\t'.join(str(d) for d in row_data) for row_data in data)
         clipboard = QtGui.QClipboard()
         clipboard.setText(text)
@@ -243,7 +242,7 @@ class DataTableView(QtWidgets.QTableView):
         if not current_index and not selected_indexes or not self.model():
             return
 
-        # get top left index
+        # Get top left index
         for index in selected_indexes:
             if (
                 index.row() <= current_index.row()
@@ -251,11 +250,11 @@ class DataTableView(QtWidgets.QTableView):
             ):
                 current_index = index
 
-        # get data
+        # Get data
         text = QtGui.QClipboard().text()
         data = (row_text.split('\t') for row_text in text.split('\n'))
 
-        # set data
+        # Set data
         for row, row_data in enumerate(data):
             row_index = current_index.siblingAtRow(current_index.row() + row)
             if not row_index.isValid():
@@ -271,7 +270,7 @@ class DataTableView(QtWidgets.QTableView):
 
 
 class TabDataParameter(ParameterWidget):
-    # Parameter to display tabular data in a QTreeWidget
+    """Parameter to display tabular data in a QTreeWidget."""
 
     value_changed: QtCore.Signal = QtCore.Signal(tuple)
 
@@ -293,7 +292,7 @@ class TabDataParameter(ParameterWidget):
         self.setLayout(QtWidgets.QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
 
-        # table view
+        # TableView
         self.model = DataTableModel(parent=self)
         self.model.itemChanged.connect(self._item_change)
         self.view = DataTableView(parent=self)
@@ -303,7 +302,7 @@ class TabDataParameter(ParameterWidget):
         )
         self.layout().addWidget(self.view)
 
-        # toolbar
+        # Toolbar
         self.toolbar = QtWidgets.QToolBar()
         size = self.toolbar.style().pixelMetric(
             QtWidgets.QStyle.PixelMetric.PM_SmallIconSize
@@ -357,7 +356,7 @@ class TabDataParameter(ParameterWidget):
         self._types = types
 
         self._delegates = []
-        # fill up to column count
+        # Fill up types to column count
         if types is None:
             types = []
         types += [None] * (self.model.columnCount() - len(types))
