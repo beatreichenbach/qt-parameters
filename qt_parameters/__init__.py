@@ -18,8 +18,10 @@ from .widgets import (
     SizeParameter,
     SizeFParameter,
     ColorParameter,
-    Label,
 )
+
+from .inputs import Label
+
 
 from .list import (
     ListParameter,
