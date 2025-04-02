@@ -90,7 +90,7 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
             self._step(add=False)
             event.accept()
         else:
-            return super().keyPressEvent(event)
+            super().keyPressEvent(event)
 
     def minimumSizeHint(self) -> QtCore.QSize:
         size = super().minimumSizeHint()
@@ -573,3 +573,4 @@ class Label(QtWidgets.QWidget):
 
         if theme := qt_themes.get_theme():
             return getattr(theme, name, None)
+        return None

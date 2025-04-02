@@ -487,6 +487,7 @@ class ParameterForm(QtWidgets.QWidget):
                         if widget := item.widget():
                             if isinstance(widget, BoolParameter):
                                 return widget
+        return None
 
     @staticmethod
     def label(parameter: ParameterWidget) -> ParameterLabel | None:
@@ -502,6 +503,7 @@ class ParameterForm(QtWidgets.QWidget):
                         if widget := item.widget():
                             if isinstance(widget, ParameterLabel):
                                 return widget
+        return None
 
     def _collapsed_boxes(self) -> tuple[str, ...]:
         """Return a tuple of all collapsed boxes."""

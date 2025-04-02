@@ -1,32 +1,31 @@
 from __future__ import annotations
 
-import logging
-import math
-from collections.abc import Sequence, Mapping, Collection
-from enum import Enum, auto, EnumMeta
+from abc import abstractmethod
+from collections.abc import Collection, Mapping, Sequence
+from enum import Enum, EnumMeta, auto
+from functools import partial
 from typing import Any, Callable
 
 from qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
 
 from . import utils
-from .resizegrip import ResizeGrip
 from .inputs import (
     FloatLineEdit,
     FloatSlider,
     IntLineEdit,
     IntSlider,
-    NumberSlider,
     RatioButton,
     TextEdit,
 )
+from .resizegrip import ResizeGrip
 
 MIN_SLIDER_WIDTH = 200
 
 
 class ParameterWidget(QtWidgets.QWidget):
-    enabled_changed: QtCore.Signal = QtCore.Signal(bool)
-    value_changed: QtCore.Signal = QtCore.Signal(object)
+    enabled_changed = QtCore.Signal(bool)
+    value_changed = QtCore.Signal(object)
 
     _value: Any = None
     _default: Any = None
@@ -45,20 +44,28 @@ class ParameterWidget(QtWidgets.QWidget):
             self.set_label(utils.title(name))
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({repr(self.name())})'
+        return f'{self.__class__.__name__}({self._name!r})'
 
     def _init_layout(self) -> None:
         self._layout = QtWidgets.QHBoxLayout()
-        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setContentsMargins(QtCore.QMargins())
         self.setLayout(self._layout)
 
-    def _init_ui(self) -> None:
-        pass
+    @abstractmethod
+    def _init_ui(self) -> None: ...
 
     def changeEvent(self, event: QtCore.QEvent) -> None:
         if event.type() == QtCore.QEvent.Type.EnabledChange:
             self.enabled_changed.emit(self.isEnabled())
         super().changeEvent(event)
+
+    def value(self) -> Any:
+        return self._value
+
+    def set_value(self, value: Any) -> None:
+        if value != self._value:
+            self._value = value
+            self.value_changed.emit(value)
 
     def default(self) -> Any:
         return self._default
@@ -85,20 +92,12 @@ class ParameterWidget(QtWidgets.QWidget):
     def set_tooltip(self, tooltip: str) -> None:
         self._tooltip = tooltip
 
-    def value(self) -> Any:
-        return self._value
-
-    def set_value(self, value: Any) -> None:
-        if value != self._value:
-            self._value = value
-            self.value_changed.emit(value)
-
     def reset(self) -> None:
         self.set_value(self.default())
 
 
 class IntParameter(ParameterWidget):
-    value_changed: QtCore.Signal = QtCore.Signal(int)
+    value_changed = QtCore.Signal(int)
 
     _value: int = 0
     _default: int = 0
@@ -205,7 +204,7 @@ class IntParameter(ParameterWidget):
 
 
 class FloatParameter(IntParameter):
-    value_changed: QtCore.Signal = QtCore.Signal(float)
+    value_changed = QtCore.Signal(float)
 
     _value: float = 0
     _default: float = 0
@@ -277,7 +276,7 @@ class StringParameter(ParameterWidget):
         REPLACE = auto()
         TOGGLE = auto()
 
-    value_changed: QtCore.Signal = QtCore.Signal(str)
+    value_changed = QtCore.Signal(str)
 
     _value: str = ''
     _default: str = ''
@@ -431,7 +430,7 @@ class PathParameter(ParameterWidget):
     SAVE_FILE = Method.SAVE_FILE
     EXISTING_DIR = Method.EXISTING_DIR
 
-    value_changed: QtCore.Signal = QtCore.Signal(str)
+    value_changed = QtCore.Signal(str)
 
     _value: str = ''
     _default: str = ''
@@ -666,7 +665,7 @@ class EnumParameter(ParameterWidget):
 
 
 class BoolParameter(ParameterWidget):
-    value_changed: QtCore.Signal = QtCore.Signal(bool)
+    value_changed = QtCore.Signal(bool)
 
     _value: bool = False
     _default: bool = False
@@ -689,7 +688,7 @@ class BoolParameter(ParameterWidget):
 
 
 class MultiIntParameter(IntParameter):
-    value_changed: QtCore.Signal = QtCore.Signal(tuple)
+    value_changed = QtCore.Signal(tuple)
 
     _count: int = 2
     _value: tuple[int, ...] = (0, 0)
@@ -891,7 +890,7 @@ class MultiFloatParameter(MultiIntParameter):
 
 
 class PointParameter(MultiIntParameter):
-    value_changed: QtCore.Signal = QtCore.Signal(QtCore.QPoint)
+    value_changed = QtCore.Signal(QtCore.QPoint)
 
     _value: QtCore.QPoint = QtCore.QPoint(0, 0)
     _default: QtCore.QPoint = QtCore.QPoint(0, 0)
@@ -917,7 +916,7 @@ class PointParameter(MultiIntParameter):
 
 
 class PointFParameter(MultiFloatParameter):
-    value_changed: QtCore.Signal = QtCore.Signal(QtCore.QPointF)
+    value_changed = QtCore.Signal(QtCore.QPointF)
 
     _value: QtCore.QPointF = QtCore.QPointF(0, 0)
     _default: QtCore.QPointF = QtCore.QPointF(0, 0)
@@ -943,7 +942,7 @@ class PointFParameter(MultiFloatParameter):
 
 
 class SizeParameter(MultiIntParameter):
-    value_changed: QtCore.Signal = QtCore.Signal(QtCore.QSize)
+    value_changed = QtCore.Signal(QtCore.QSize)
 
     _value: QtCore.QSize = QtCore.QSize(0, 0)
     _default: QtCore.QSize = QtCore.QSize(0, 0)
@@ -962,7 +961,7 @@ class SizeParameter(MultiIntParameter):
 
 
 class SizeFParameter(MultiFloatParameter):
-    value_changed: QtCore.Signal = QtCore.Signal(QtCore.QSizeF)
+    value_changed = QtCore.Signal(QtCore.QSizeF)
 
     _value: QtCore.QSizeF = QtCore.QSizeF(0, 0)
     _default: QtCore.QSizeF = QtCore.QSizeF(0, 0)
@@ -981,7 +980,7 @@ class SizeFParameter(MultiFloatParameter):
 
 
 class ColorParameter(MultiFloatParameter):
-    value_changed: QtCore.Signal = QtCore.Signal(QtGui.QColor)
+    value_changed = QtCore.Signal(QtGui.QColor)
 
     _count: int = 3
     _value: QtGui.QColor = QtGui.QColor(0, 0, 0)
