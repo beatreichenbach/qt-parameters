@@ -387,7 +387,7 @@ class StringParameter(ParameterWidget):
             else:
                 action = QtGui.QAction(label, self)
                 action.setData(data)
-                action.triggered.connect(lambda _, a=action: self._action_triggered(a))
+                action.triggered.connect(partial(self._action_triggered, action))
                 menu.addAction(action)
         return menu
 
