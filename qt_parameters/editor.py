@@ -303,12 +303,17 @@ class ParameterForm(QtWidgets.QWidget):
         return tab_widget
 
     def add_widget(
-        self, widget: QtWidgets.QWidget, column: int = 1, column_span: int = -1
+        self,
+        widget: QtWidgets.QWidget,
+        column: int = 1,
+        column_span: int = -1,
+        row: int = -1,
+        row_span: int = 1,
     ) -> QtWidgets.QWidget:
         """Add a widget to the ParameterForm's GridLayout."""
 
-        row = self._layout.rowCount() - 1
-        row_span = 1
+        if row < 0:
+            row = self._layout.rowCount() + row
         if column_span == -1 and self._layout.columnCount() < 2:
             # In case the layout doesn't have any columns yet, default to 3 columns.
             column_span = 2
@@ -316,27 +321,40 @@ class ParameterForm(QtWidgets.QWidget):
         self._refresh_stretch()
         return widget
 
-    def add_separator(self) -> QtWidgets.QFrame:
+    def add_separator(
+        self,
+        name: str = '',
+        column: int = 1,
+        column_span: int = -1,
+        row: int = -1,
+        row_span: int = 1,
+    ) -> QtWidgets.QFrame:
         """Add a horizontal separator to the ParameterForm's GridLayout."""
 
+        if row < 0:
+            row = self._layout.rowCount() + row
+        if name:
+            label = QtWidgets.QLabel(name)
+            self._layout.addWidget(label, row, 1)
         line = QtWidgets.QFrame(self)
         line.setFixedHeight(1)
         line.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         line.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
-
-        self.add_widget(line)
+        self.add_widget(line, column, column_span, row, row_span)
         return line
 
     def add_layout(
         self,
         layout: QtWidgets.QLayout,
         column: int = 1,
-        row_span: int = 1,
         column_span: int = -1,
+        row: int = -1,
+        row_span: int = 1,
     ) -> QtWidgets.QLayout:
         """Add a layout to the ParameterForm's GridLayout."""
 
-        row = self._layout.rowCount() - 1
+        if row < 0:
+            row = self._layout.rowCount() + row
         if column_span == -1 and self._layout.columnCount() < 2:
             # In case the layout doesn't have any columns yet, default to 3 columns.
             column_span = 2
