@@ -146,7 +146,7 @@ class ParameterForm(QtWidgets.QWidget):
             state['collapsed_boxes'] = boxes
         for form in self.forms():
             if form_state := form.state():
-                state[form.name] = form_state
+                state[form.name()] = form_state
         return state
 
     def set_state(self, state: dict) -> None:
