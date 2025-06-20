@@ -111,7 +111,7 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
         event.accept()
 
     def _step(self, add: bool) -> bool:
-        """Step up or down the text based on current cursor position."""
+        """Step up or down the text based on the current cursor position."""
 
         self.setFocus()
         text = self.text() or '0'
@@ -119,14 +119,14 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
         if self.hasSelectedText():
             position = self.selectionStart()
 
-        # Check if cursor is on a special character
+        # Check if the cursor is on a special character
         if position < len(text) and not text[position].isdigit():
             return False
 
         step_index = self._step_index(text, position)
         exponent = self._step_exponent(step_index)
 
-        # Perform step up or down
+        # Perform a step up or down
         amount = 1 if add else -1
         step = amount * pow(10, exponent)
         value = self._value + step
@@ -143,7 +143,7 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
         self._value = value
         self.value_changed.emit(value)
 
-        # Get new position and set selection
+        # Get the new position and set selection
         position = self._relative_position(step_index, text)
         self.setSelection(position, 1)
         return True
@@ -172,11 +172,11 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
     def _step_index(self, text: str, position: int) -> int:
         """
         Return the step index relative to the decimal point.
-        This preserves position when number gets larger or changes +/- sign.
+        This preserves position when the number gets larger or changes +/- sign.
         """
 
         step_index = len(text) - position
-        # If cursor is at end, edit first digit
+        # If cursor is at end, edit the first digit
         step_index = max(1, step_index)
 
         return step_index
@@ -255,7 +255,7 @@ class FloatLineEdit(NumberLineEdit[float]):
 
     def _step_exponent(self, step_index: int) -> int:
         exponent = step_index
-        # If cursor is on the decimal then edit the first decimal
+        # If the cursor is on a decimal edit the first decimal.
         if step_index >= 0:
             exponent = step_index - 1
 
@@ -273,7 +273,7 @@ class FloatLineEdit(NumberLineEdit[float]):
         decimal_index = text.find('.')
         position = len(text) - step_index
         if decimal_index > -1:
-            # If position is on decimal point, move to first decimal
+            # If the position is on a decimal point, move to the first decimal.
             if step_index == 0:
                 step_index = -1
             position = decimal_index - step_index
@@ -555,7 +555,7 @@ class Label(QtWidgets.QWidget):
 
         self.set_icon(icon)
         if icon:
-            # Create custom pixmap with color.
+            # Create a custom pixmap with color.
             self._icon_label.setPixmap(icon.pixmap(size=self._icon_size, color=color))
 
     def _refresh_icon(self) -> None:

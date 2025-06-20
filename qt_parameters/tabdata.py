@@ -213,7 +213,7 @@ class DataTableView(QtWidgets.QTableView):
         if not self.model():
             return
 
-        # Create nested list from data
+        # Create a nested list from the data
         data = []
         row_data = []
         row = 0

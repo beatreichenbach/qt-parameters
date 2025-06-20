@@ -252,7 +252,7 @@ class DragWidget(QtWidgets.QWidget):
             self._item_layout.insertWidget(index, widget)
 
     def _refresh_tab_order(self) -> None:
-        """Refresh the TabOrder from start to the end of the layout."""
+        """Refresh the TabOrder from the start to the end of the layout."""
 
         first = None
         for i in range(self._item_layout.count()):

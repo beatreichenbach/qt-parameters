@@ -174,7 +174,7 @@ class ParameterForm(QtWidgets.QWidget):
         return values
 
     def set_values(self, values: dict) -> None:
-        """Set the values of ParameterWidgets in the form from a dict."""
+        """Set the values of ParameterWidgets in the form."""
 
         widgets = self.widgets()
         for name, value in values.items():
@@ -187,7 +187,7 @@ class ParameterForm(QtWidgets.QWidget):
                 widget.set_checked(value)
 
     def set_defaults(self, values: dict) -> None:
-        """Set the default values of ParameterWidgets in the form from a dict."""
+        """Set the default values of ParameterWidgets in the form."""
 
         widgets = self.widgets()
         for name, value in values.items():
@@ -256,7 +256,7 @@ class ParameterForm(QtWidgets.QWidget):
     def add_form(self, form: ParameterForm, checkable: bool = False) -> CollapsibleBox:
         """Add a form and return the CollapsibleBox."""
 
-        # Add child form
+        # Add ParameterForm
         name = form.name()
         self._validate_name(name)
         self._widgets[name] = form
@@ -284,7 +284,7 @@ class ParameterForm(QtWidgets.QWidget):
     def add_forms(self, forms: Sequence[ParameterForm]) -> QtWidgets.QTabWidget:
         """Add multiple forms and return the TabWidget."""
 
-        # Validate all names first
+        # Validate the names before creating any widgets.
         for form in forms:
             self._validate_name(form.name())
 
@@ -391,7 +391,7 @@ class ParameterForm(QtWidgets.QWidget):
         Return the first ParameterWidget with name `name`.
 
         The `name` follows the attribute naming scheme, meaning nested parameters can
-        be accessed with name = 'parent.child'.
+        be accessed with: name = 'parent.child'.
         """
 
         names = name.split('.')
@@ -419,7 +419,7 @@ class ParameterForm(QtWidgets.QWidget):
         Return the first ParameterForm with name `name`.
 
         The `name` follows the attribute naming scheme, meaning nested forms can
-        be accessed with name = 'parent.child'.
+        be accessed with: name = 'parent.child'.
         """
 
         names = name.split('.')
@@ -543,7 +543,7 @@ class ParameterForm(QtWidgets.QWidget):
         """
         Validates a parameter name, ensuring it does not already exist.
 
-        :raises ValueError: if the name is not valid.
+        :raises ValueError: If the name is not valid.
         """
         if not name:
             raise ValueError(f'name cannot be empty')
