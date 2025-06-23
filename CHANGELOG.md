@@ -1,6 +1,33 @@
 # CHANGELOG
 
 
+## v1.1.1 (2025-06-23)
+
+### Bug Fixes
+
+- **editor**: Expose layout parameters
+  ([`de11ba0`](https://github.com/beatreichenbach/qt-parameters/commit/de11ba0d6ae2c1eab1fd729066c8bbf7b8f7960c))
+
+- **editor**: Use form name function
+  ([`f0c4711`](https://github.com/beatreichenbach/qt-parameters/commit/f0c47115ffbcc7e1b610a2d86f2cc4d2c5f83dfb))
+
+- **widgets**: Use partial
+  ([`205c6eb`](https://github.com/beatreichenbach/qt-parameters/commit/205c6eb0cb4d05a8b89d170aaf542251ef031380))
+
+### Code Style
+
+- Clean unused code, add explicit return
+  ([`86e2ae4`](https://github.com/beatreichenbach/qt-parameters/commit/86e2ae490d8f6426ae811093a2d7ce93dea7196d))
+
+- Edit doc strings
+  ([`2957440`](https://github.com/beatreichenbach/qt-parameters/commit/2957440fd282ba84e743522b5d9261efc04f654f))
+
+### Refactoring
+
+- Split input widgets
+  ([`10948de`](https://github.com/beatreichenbach/qt-parameters/commit/10948de64dc66af17f07ae9b5a8d99dd32cf8ded))
+
+
 ## v1.1.0 (2025-03-30)
 
 ### Bug Fixes

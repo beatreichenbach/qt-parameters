@@ -1,6 +1,6 @@
 [project]
 name = "qt-parameters"
-version = "1.1.0"
+version = "1.1.1"
 description = "Qt parameter widgets and forms for Python."
 authors = [
     {name = "Beat Reichenbach"}
