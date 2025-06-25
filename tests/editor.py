@@ -2,7 +2,7 @@ import json
 import logging
 
 import qt_themes
-from qtpy import QtGui, QtCore, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from qt_parameters import (
     BoolParameter,
@@ -12,13 +12,13 @@ from qt_parameters import (
     IntParameter,
     MultiFloatParameter,
     MultiIntParameter,
+    ParameterEditor,
     ParameterForm,
     PointFParameter,
     PointParameter,
     SizeFParameter,
     SizeParameter,
     StringParameter,
-    ParameterEditor,
 )
 from tests import application
 
