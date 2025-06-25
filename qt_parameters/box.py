@@ -141,8 +141,9 @@ class CollapsibleBox(QtWidgets.QFrame):
         self.frame.setLayout(layout)
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
-        if not self._style == CollapsibleBox.Style.BUTTON:
+        if self._style != CollapsibleBox.Style.BUTTON:
             super().paintEvent(event)
+            return
 
         option = QtWidgets.QStyleOptionButton()
         option.initFrom(self)
