@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v1.1.2 (2025-06-25)
+
+### Bug Fixes
+
+- **box**: Paint QFrame by default
+  ([`79e4ad5`](https://github.com/beatreichenbach/qt-parameters/commit/79e4ad514e1c88bcd211e13ae20c32419646395e))
+
+- **box**: Use QTabWidget frame for button style
+  ([`07707a9`](https://github.com/beatreichenbach/qt-parameters/commit/07707a99365327657b6d9fd5e4f0e312d480f98e))
+
+### Code Style
+
+- Reorder imports
+  ([`752625b`](https://github.com/beatreichenbach/qt-parameters/commit/752625b1ce04efd98db0b6a0ca8c0c061a26ff7e))
+
+
 ## v1.1.1 (2025-06-23)
 
 ### Bug Fixes
