@@ -8,6 +8,8 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 PixelMetric = QtWidgets.QStyle.PixelMetric
 
+QStyleOptionTab = QtWidgets.QStyleOptionTab
+
 
 class CollapsibleBox(QtWidgets.QFrame):
     class Style(enum.IntEnum):
@@ -54,7 +56,7 @@ class CollapsibleBox(QtWidgets.QFrame):
         self.header = QtWidgets.QWidget()
         self.header.setFocusPolicy(QtCore.Qt.FocusPolicy.ClickFocus)
         self.header.installEventFilter(self)
-        self.header.setBackgroundRole(QtGui.QPalette.ColorRole.Base)
+        self.header.setBackgroundRole(QtGui.QPalette.ColorRole.Button)
         self._layout.addWidget(self.header)
 
         header_layout = QtWidgets.QHBoxLayout()
@@ -145,18 +147,46 @@ class CollapsibleBox(QtWidgets.QFrame):
             super().paintEvent(event)
             return
 
-        option = QtWidgets.QStyleOptionButton()
-        option.initFrom(self)
-
-        if not self._collapsed:
-            option.state |= QtWidgets.QStyle.StateFlag.State_Sunken
-        if self._collapsed and self.underMouse():
-            option.state |= QtWidgets.QStyle.StateFlag.State_MouseOver
-
-        style = self.style()
-        element = QtWidgets.QStyle.PrimitiveElement.PE_PanelButtonCommand
         painter = QtGui.QPainter(self)
-        style.drawPrimitive(element, option, painter, self)
+        style = self.style()
+
+        if self._collapsed:
+            option = QtWidgets.QStyleOptionButton()
+            option.initFrom(self)
+            if self.underMouse():
+                option.state |= QtWidgets.QStyle.StateFlag.State_MouseOver
+
+            element = QtWidgets.QStyle.PrimitiveElement.PE_PanelButtonCommand
+            style.drawPrimitive(element, option, painter, self)
+        else:
+            overlap = style.pixelMetric(
+                QtWidgets.QStyle.PixelMetric.PM_TabBarBaseOverlap
+            )
+
+            # Background Frame
+            option = QtWidgets.QStyleOptionTabWidgetFrame()
+            option.initFrom(self)
+            option.rect.adjust(0, overlap, 0, 0)
+
+            element = QtWidgets.QStyle.PrimitiveElement.PE_FrameTabWidget
+            style.drawPrimitive(element, option, painter, self)
+
+            # Header
+            option = QtWidgets.QStyleOptionTab()
+            option.initFrom(self)
+
+            option.features |= QStyleOptionTab.TabFeature.HasFrame
+            option.state |= QtWidgets.QStyle.StateFlag.State_Selected
+            option.selectedPosition = QStyleOptionTab.SelectedPosition.NotAdjacent
+            option.position = QStyleOptionTab.TabPosition.OnlyOneTab
+
+            option.rect.adjust(0, 0, 0, -overlap)
+
+            # Resetting the ClipRect ensures the overlap isn't drawn.
+            painter.setClipRect(QtCore.QRect())
+
+            element = QtWidgets.QStyle.ControlElement.CE_TabBarTab
+            style.drawControl(element, option, painter, self)
 
     def setMaximumHeight(self, maxh: int) -> None:
         self._maximum_height = maxh
