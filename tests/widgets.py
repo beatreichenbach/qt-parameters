@@ -222,7 +222,8 @@ class WidgetGallery(QtWidgets.QWidget):
 
         # Checkable
         form = ParameterForm('checkable_parameters')
-        parameter_form.add_form(form, checkable=True)
+        box = parameter_form.add_form(form, checkable=True)
+        box.set_checked(True)
 
         parm = IntParameter('int')
         parm.set_slider_min(10)
@@ -241,6 +242,7 @@ class WidgetGallery(QtWidgets.QWidget):
 
         parm = SizeParameter('sizef')
         form.add_parameter(parm, checkable=True)
+        form.checkbox(parm).set_value(True)
 
         # TabData
         form = ParameterForm('tabdata')
