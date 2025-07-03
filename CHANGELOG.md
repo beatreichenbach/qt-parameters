@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v1.1.3 (2025-07-03)
+
+### Bug Fixes
+
+- **editor**: Use event filter
+  ([`da74ce1`](https://github.com/beatreichenbach/qt-parameters/commit/da74ce1908a35a9f4faeccb95a4ff4a8fc765077))
+
+### Documentation
+
+- Update screenshots
+  ([`1407680`](https://github.com/beatreichenbach/qt-parameters/commit/1407680ced3ca45fd2bec0c9d0870816aa820a6b))
+
+
 ## v1.1.2 (2025-06-25)
 
 ### Bug Fixes
