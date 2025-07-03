@@ -86,6 +86,26 @@ class ParameterLabel(QtWidgets.QLabel):
             self._tooltip.show()
 
 
+class LabelFilter(QtCore.QObject):
+    def __init__(
+        self, label: QtWidgets.QLabel, parent: QtWidgets.QWidget | None = None
+    ) -> None:
+        if not parent:
+            # Store the LabelFilter on the label, as it should be deleted with the
+            # label and not the watched widget.
+            parent = label
+        super().__init__(parent)
+        self.label = label
+
+    def eventFilter(self, watched: QtCore.QObject, event: QtCore.QEvent) -> bool:
+        if isinstance(watched, QtWidgets.QWidget):
+            if event.type() == QtCore.QEvent.Type.EnabledChange:
+                self.label.setEnabled(watched.isEnabled())
+            elif event.type() in (QtCore.QEvent.Type.Show, QtCore.QEvent.Type.Hide):
+                self.label.setVisible(watched.isVisible())
+        return False
+
+
 class ParameterForm(QtWidgets.QWidget):
     parameter_changed: QtCore.Signal = QtCore.Signal(ParameterWidget)
 
@@ -242,9 +262,10 @@ class ParameterForm(QtWidgets.QWidget):
             label = ParameterLabel(widget, self)
             label.setEnabled(widget.isEnabled())
             self._layout.addWidget(label, row, 1)
-            widget.enabled_changed.connect(label.setEnabled)
             if alignment:
                 label.setAlignment(alignment)
+            label_filter = LabelFilter(label)
+            widget.installEventFilter(label_filter)
 
         # Widget
         self._layout.addWidget(widget, row, 2)

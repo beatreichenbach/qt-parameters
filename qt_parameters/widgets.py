@@ -24,7 +24,6 @@ MIN_SLIDER_WIDTH = 200
 
 
 class ParameterWidget(QtWidgets.QWidget):
-    enabled_changed = QtCore.Signal(bool)
     value_changed = QtCore.Signal(object)
 
     _value: Any = None
@@ -53,11 +52,6 @@ class ParameterWidget(QtWidgets.QWidget):
 
     @abstractmethod
     def _init_ui(self) -> None: ...
-
-    def changeEvent(self, event: QtCore.QEvent) -> None:
-        if event.type() == QtCore.QEvent.Type.EnabledChange:
-            self.enabled_changed.emit(self.isEnabled())
-        super().changeEvent(event)
 
     def value(self) -> Any:
         return self._value
