@@ -7,9 +7,8 @@ from collections.abc import Sequence
 from qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
 
-from . import utils
 from .resizegrip import ResizeGrip
-from .widgets import ParameterWidget, IntParameter, FloatParameter
+from .widgets import FloatParameter, IntParameter, ParameterWidget
 
 
 class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
@@ -274,10 +273,10 @@ class TabDataParameter(ParameterWidget):
 
     value_changed: QtCore.Signal = QtCore.Signal(tuple)
 
-    _value: tuple | None = None
-    _default: tuple | None = None
-    _headers: tuple | None = None
-    _types: tuple | None = None
+    _value: tuple = ()
+    _default: tuple = ()
+    _headers: tuple[str, ...] = ()
+    _types: tuple[type, ...] = ()
     _start_index: int = 0
     _decimals: int = 3
 
@@ -320,7 +319,7 @@ class TabDataParameter(ParameterWidget):
         action.triggered.connect(self.remove_row)
         self.toolbar.addAction(action)
 
-        icon = MaterialIcon('clear_all')
+        icon = MaterialIcon('delete')
         action = QtGui.QAction(icon, 'Clear', self)
         action.triggered.connect(self.clear)
         self.toolbar.addAction(action)
@@ -331,7 +330,7 @@ class TabDataParameter(ParameterWidget):
     def clear(self) -> None:
         self.model.clear()
         super().set_value(())
-        self.update_horizontal_headers()
+        self._refresh_horizontal_headers()
 
     def decimals(self) -> int:
         return self._decimals
@@ -342,24 +341,27 @@ class TabDataParameter(ParameterWidget):
             if isinstance(delegate, FloatDelegate):
                 delegate.decimals = decimals
 
-    def headers(self) -> tuple | None:
+    def headers(self) -> tuple[str, ...]:
         return self._headers
 
-    def set_headers(self, headers: Sequence | None) -> None:
+    def set_headers(self, headers: Sequence[str]) -> None:
+        if not isinstance(headers, tuple):
+            headers = tuple(headers)
         self._headers = headers
-        self.update_horizontal_headers()
+        self._refresh_horizontal_headers()
 
-    def types(self) -> tuple | None:
+    def types(self) -> tuple[type, ...]:
         return self._types
 
-    def set_types(self, types: Sequence | None) -> None:
+    def set_types(self, types: Sequence[type]) -> None:
+        if not isinstance(types, tuple):
+            types = tuple(types)
         self._types = types
 
         self._delegates = []
         # Fill up types to column count
-        if types is None:
-            types = []
-        types += [None] * (self.model.columnCount() - len(types))
+        if not types:
+            types = [None] * (self.model.columnCount() - len(types))
         self.model.types = types
 
         for i, type_ in enumerate(types):
@@ -378,28 +380,14 @@ class TabDataParameter(ParameterWidget):
 
     def set_start_index(self, start_index: int) -> None:
         self._start_index = start_index
-        self.update_vertical_headers()
-
-    def update_horizontal_headers(self) -> None:
-        if self._headers:
-            labels = tuple(map(utils.title, self._headers))
-        else:
-            labels = tuple(map(str, range(self.model.columnCount())))
-
-        self.model.setHorizontalHeaderLabels(labels)
-        self.resize_headers()
-
-    def update_vertical_headers(self) -> None:
-        rows = range(self._start_index, self.model.rowCount() + self._start_index)
-        labels = tuple(map(str, rows))
-        self.model.setVerticalHeaderLabels(labels)
+        self._refresh_vertical_headers()
 
     def value(self) -> tuple:
         return super().value()
 
-    def set_value(self, value: Sequence | None) -> None:
+    def set_value(self, value: Sequence) -> None:
         self.model.clear()
-        if value is None:
+        if not value:
             return
 
         for row, row_data in enumerate(value):
@@ -408,18 +396,18 @@ class TabDataParameter(ParameterWidget):
                 row_data = row_data.values()
             for column, cell_data in enumerate(row_data):
                 item = QtGui.QStandardItem()
-                # if isinstance(cell_data, float):
-                #     cell_data = round(cell_data, self._decimals)
                 item.setData(cell_data, QtCore.Qt.ItemDataRole.EditRole)
                 items.append(item)
             if items:
                 self.model.appendRow(items)
 
         super().set_value(self._tab_data_value())
-        self.update_horizontal_headers()
-        self.update_vertical_headers()
+        self._refresh_horizontal_headers()
+        self._refresh_vertical_headers()
 
     def add_row(self) -> None:
+        """Add a row."""
+
         items = []
         for i in range(self.model.columnCount()):
             item = QtGui.QStandardItem()
@@ -432,22 +420,20 @@ class TabDataParameter(ParameterWidget):
             items.append(item)
         self.model.insertRow(self.model.rowCount(), items)
         self._item_change()
-        self.update_vertical_headers()
+        self._refresh_vertical_headers()
 
     def remove_row(self) -> None:
+        """Remove a row."""
+
         self.model.takeRow(self.model.rowCount() - 1)
         self._item_change()
-
-    def resize_headers(self) -> None:
-        header = self.view.horizontalHeader()
-        for i in range(header.count()):
-            size = max(self.view.sizeHintForColumn(i), header.sectionSizeHint(i))
-            self.view.setColumnWidth(i, size)
 
     def _item_change(self) -> None:
         super().set_value(self._tab_data_value())
 
     def _tab_data_value(self) -> tuple:
+        """Return the data as nested tuples."""
+
         values = []
         for row in range(self.model.rowCount()):
             row_values = []
@@ -455,5 +441,28 @@ class TabDataParameter(ParameterWidget):
                 index = self.model.index(row, column)
                 column_value = self.model.data(index, QtCore.Qt.ItemDataRole.EditRole)
                 row_values.append(column_value)
-            values.append(row_values)
+            values.append(tuple(row_values))
         return tuple(values)
+
+    def _refresh_horizontal_headers(self) -> None:
+        """Refresh the horizontal header labels."""
+
+        if self._headers:
+            labels = self._headers
+        else:
+            labels = tuple(str(i) for i in range(self.model.columnCount()))
+        self.model.setHorizontalHeaderLabels(labels)
+
+        # Resize columns
+        header = self.view.horizontalHeader()
+        for i in range(header.count()):
+            size = max(self.view.sizeHintForColumn(i), header.sectionSizeHint(i))
+            self.view.setColumnWidth(i, size)
+
+    def _refresh_vertical_headers(self) -> None:
+        """Refresh the vertical header labels."""
+
+        start = self._start_index
+        end = self.model.rowCount() + self._start_index
+        labels = tuple(str(i) for i in range(start, end))
+        self.model.setVerticalHeaderLabels(labels)
