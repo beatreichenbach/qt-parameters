@@ -11,6 +11,21 @@ from .scrollarea import VerticalScrollArea
 from .widgets import ParameterWidget, BoolParameter
 
 
+class Separator(QtWidgets.QWidget):
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__(parent)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(QtCore.QMargins(0, 9, 0, 9))
+        self.setLayout(layout)
+
+        frame = QtWidgets.QFrame(self)
+        frame.setFixedHeight(1)
+        frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        frame.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+        layout.addWidget(frame)
+
+
 class ParameterToolTip(QtWidgets.QFrame):
     def __init__(
         self, widget: ParameterWidget, parent: QtWidgets.QWidget | None = None
@@ -346,11 +361,11 @@ class ParameterForm(QtWidgets.QWidget):
     def add_separator(
         self,
         name: str = '',
-        column: int = 1,
+        column: int = 2,
         column_span: int = -1,
         row: int = -1,
         row_span: int = 1,
-    ) -> QtWidgets.QFrame:
+    ) -> Separator:
         """Add a horizontal separator to the ParameterForm's GridLayout."""
 
         if row < 0:
@@ -358,12 +373,10 @@ class ParameterForm(QtWidgets.QWidget):
         if name:
             label = QtWidgets.QLabel(name)
             self._layout.addWidget(label, row, 1)
-        line = QtWidgets.QFrame(self)
-        line.setFixedHeight(1)
-        line.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        line.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
-        self.add_widget(line, column, column_span, row, row_span)
-        return line
+            column = min(2, column)
+        separator = Separator()
+        self.add_widget(separator, column, column_span, row, row_span)
+        return separator
 
     def add_layout(
         self,
