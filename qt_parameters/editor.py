@@ -264,6 +264,7 @@ class ParameterForm(QtWidgets.QWidget):
             self._layout.addWidget(label, row, 1)
             if alignment:
                 label.setAlignment(alignment)
+            label.setVisible(False)
             label_filter = LabelFilter(label)
             widget.installEventFilter(label_filter)
 
