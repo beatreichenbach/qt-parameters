@@ -7,6 +7,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 from . import utils
 from .box import CollapsibleBox
+from .rediotab import RadioTabWidget
 from .scrollarea import VerticalScrollArea
 from .widgets import ParameterWidget, BoolParameter
 
@@ -206,6 +207,9 @@ class ParameterForm(QtWidgets.QWidget):
                 values[name] = widget.values()
             elif isinstance(widget, CollapsibleBox):
                 values[name] = widget.checked()
+            elif isinstance(widget, RadioTabWidget):
+                if form := self.form(name.replace('_enabled', '')):
+                    values[name] = widget.currentWidget() == form
         return values
 
     def set_values(self, values: dict) -> None:
@@ -220,6 +224,10 @@ class ParameterForm(QtWidgets.QWidget):
                 widget.set_values(value)
             elif isinstance(widget, CollapsibleBox):
                 widget.set_checked(value)
+            elif isinstance(widget, RadioTabWidget):
+                if value:
+                    if form := self.form(name.replace('_enabled', '')):
+                        widget.setCurrentWidget(form)
 
     def set_defaults(self, values: dict) -> None:
         """Set the default values of ParameterWidgets in the form."""
@@ -318,14 +326,23 @@ class ParameterForm(QtWidgets.QWidget):
 
         return box
 
-    def add_forms(self, forms: Sequence[ParameterForm]) -> QtWidgets.QTabWidget:
-        """Add multiple forms and return the TabWidget."""
+    def add_forms(
+        self, forms: Sequence[ParameterForm], radio: bool = False
+    ) -> QtWidgets.QTabWidget:
+        """
+        Add multiple forms and return the TabWidget. If radio is True, use a
+        RadioTabWidget which only allows one form to be active.
+        """
 
         # Validate the names before creating any widgets.
         for form in forms:
             self._validate_name(form.name())
 
-        tab_widget = QtWidgets.QTabWidget()
+        if radio:
+            tab_widget = RadioTabWidget()
+        else:
+            tab_widget = QtWidgets.QTabWidget()
+
         for form in forms:
             name = form.name()
             self._widgets[name] = form
@@ -334,6 +351,9 @@ class ParameterForm(QtWidgets.QWidget):
 
             label = utils.title(name)
             tab_widget.addTab(form, label)
+
+            if radio:
+                self._widgets[f'{name}_enabled'] = tab_widget
 
         self.add_widget(tab_widget)
 
@@ -523,6 +543,8 @@ class ParameterForm(QtWidgets.QWidget):
             elif isinstance(widget, ParameterWidget):
                 widgets[name] = widget
             elif isinstance(widget, CollapsibleBox):
+                widgets[name] = widget
+            elif isinstance(widget, RadioTabWidget):
                 widgets[name] = widget
         return widgets
 

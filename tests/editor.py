@@ -57,8 +57,8 @@ class Editor(ParameterEditor):
         try:
             parm = StringParameter('string')
             form.add_parameter(parm)
-        except ValueError as e:
-            logging.exception(e)
+        except ValueError:
+            logging.info(f'Unique names validated successfully.')
             self.remove_form(form)
             self.remove_widget(box)
 
@@ -105,6 +105,17 @@ class Editor(ParameterEditor):
         # TabWidget
         self.add_forms((multi_form, qt_form))
 
+        # RadioTabWidget
+        form_tab_1 = ParameterForm('tab_1')
+        parm = StringParameter('string')
+        form_tab_1.add_parameter(parm)
+
+        form_tab_2 = ParameterForm('tab_2')
+        parm = StringParameter('string')
+        form_tab_2.add_parameter(parm)
+
+        self.add_forms((form_tab_1, form_tab_2), radio=True)
+
         # Options
         self.add_separator()
 
@@ -144,7 +155,7 @@ class EditorGallery(QtWidgets.QWidget):
 
     def _init_ui(self) -> None:
         self.setWindowTitle('Parameter Editors')
-        self.resize(640, 720)
+        self.resize(640, 840)
 
         layout = QtWidgets.QHBoxLayout()
         self.setLayout(layout)
