@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v1.2.0 (2025-08-03)
+
+### Bug Fixes
+
+- **editor**: Add margin to separator
+  ([`6c7d283`](https://github.com/beatreichenbach/qt-parameters/commit/6c7d2836778e606da025fc8256a112005bc3eb1e))
+
+- **editor**: Default label as hidden
+  ([`8b7c588`](https://github.com/beatreichenbach/qt-parameters/commit/8b7c588f512f0e761b4a022937e0768833398dbe))
+
+- **tab**: Use labels for headers
+  ([`3307fe9`](https://github.com/beatreichenbach/qt-parameters/commit/3307fe91e564d0fa81f0043e6e6ef633c40c0c97))
+
+### Features
+
+- **editor**: Add RadioTabWidget
+  ([`af61844`](https://github.com/beatreichenbach/qt-parameters/commit/af618440a1fc94f75ba7a2079b54e50a28f306d7))
+
+
 ## v1.1.3 (2025-07-03)
 
 ### Bug Fixes
