@@ -381,6 +381,7 @@ class FloatSlider(NumberSlider[float]):
 
         self._minimum = super().minimum()
         self._maximum = super().maximum()
+        self._decimals = 2
 
         self.setSingleStep(1)
         self.setPageStep(10)
@@ -417,6 +418,11 @@ class FloatSlider(NumberSlider[float]):
         self._refresh_steps()
         self.set_value(value)
 
+    def set_decimals(self, decimals: int) -> None:
+        """Set decimal precision for the slider."""
+        self._decimals = decimals
+        self._refresh_steps()
+
     def _int(self, value: float) -> int:
         """Return an int value in slider scale."""
 
@@ -442,9 +448,8 @@ class FloatSlider(NumberSlider[float]):
     def _refresh_steps(self) -> None:
         """Refresh the slider ticks and steps based on the minimum and maximum."""
 
-        # Find a value that brings the float range into an int range
-        # with step size locked to 1 and 10
-        step = pow(10, -(self._exponent() - 2))
+        # Scale step based on decimals
+        step = pow(10, max(2, self._decimals))
 
         self.blockSignals(True)
         self.setMinimum(int(self._minimum * step))

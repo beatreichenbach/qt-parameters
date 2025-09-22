@@ -206,7 +206,7 @@ class FloatParameter(IntParameter):
     _slider_max: float = 1
     _line_min: float | None = None
     _line_max: float | None = None
-    _decimals: int = 4
+    _decimals: int = 2
 
     def _init_ui(self) -> None:
         # line
@@ -219,6 +219,7 @@ class FloatParameter(IntParameter):
         # slider
         self.slider = FloatSlider()
         self.slider.set_maximum(self._slider_max)
+        self.slider.set_decimals(self._decimals)
         self.slider.value_changed.connect(self._slider_value_changed)
         # prevent any size changes when slider shows
         self.slider.setMaximumHeight(self.line.minimumSizeHint().height())
@@ -812,7 +813,7 @@ class MultiFloatParameter(MultiIntParameter):
     _line_max: float | None = None
     _slider_min: float = 0
     _slider_max: float = 1
-    _decimals: int = 4
+    _decimals: int = 2
 
     def _init_ui(self) -> None:
         # Lines
