@@ -360,13 +360,24 @@ class IntSlider(NumberSlider[int]):
         self._refresh_steps()
 
     def _refresh_steps(self) -> None:
-        """Refresh the slider ticks and steps based on the minimum and maximum."""
+        """Refresh the slider page step and tick interval based on the range size."""
+        range_size = self.maximum() - self.minimum()
+        if range_size <= 10:
+            tick_interval = 1
+            page_step = max(1, range_size // 5)
+        elif range_size <= 100:
+            tick_interval = 5 if range_size <= 50 else 10
+            page_step = tick_interval * 2
+        elif range_size <= 1000:
+            tick_interval = 10
+            page_step = 50
+        else:
+            tick_interval = max(1, range_size // 100)
+            page_step = max(1, range_size // 10)
 
-        step = pow(10, max(self._exponent() - 2, 0))
-
-        self.setSingleStep(step)
-        self.setPageStep(step * 10)
-        self.setTickInterval(step * 10)
+        self.setSingleStep(1)
+        self.setPageStep(page_step)
+        self.setTickInterval(tick_interval)
 
 
 class FloatSlider(NumberSlider[float]):
@@ -446,15 +457,29 @@ class FloatSlider(NumberSlider[float]):
         return float_value
 
     def _refresh_steps(self) -> None:
-        """Refresh the slider ticks and steps based on the minimum and maximum."""
+        """Refresh the slider page step and tick interval based on the range size and decimal precision."""
+        scale_factor = pow(10, self._decimals)
+        int_min = int(self._minimum * scale_factor)
+        int_max = int(self._maximum * scale_factor)
+        range_size = int_max - int_min
 
-        # Scale step based on decimals
-        step = pow(10, max(2, self._decimals))
+        if self._decimals <= 1:
+            tick_interval = max(scale_factor // 10, range_size // 20)
+            page_step = tick_interval * 2
+        elif self._decimals == 2:
+            tick_interval = max(scale_factor // 20, range_size // 50)
+            page_step = max(scale_factor // 10, range_size // 10)
+        else:
+            tick_interval = max(scale_factor // 100, range_size // 100)
+            page_step = max(scale_factor // 10, range_size // 20)
 
         self.blockSignals(True)
-        self.setMinimum(int(self._minimum * step))
-        self.setMaximum(int(self._maximum * step))
+        self.setMinimum(int_min)
+        self.setMaximum(int_max)
         self.blockSignals(False)
+        self.setSingleStep(1)
+        self.setPageStep(max(1, page_step))
+        self.setTickInterval(max(1, tick_interval))
 
     def _value_changed(self, value: int) -> None:
         """Emit a float signal on value change."""
