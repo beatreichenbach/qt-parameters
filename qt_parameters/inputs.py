@@ -297,7 +297,7 @@ class DoubleValidator(QtGui.QDoubleValidator):
             float(text)
         except ValueError:
             characters = '+-01234567890.'
-            text = [t for t in text if t in characters]
+            text = ''.join(t for t in text if t in characters)
 
         try:
             value = float(text)
