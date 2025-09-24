@@ -361,6 +361,7 @@ class IntSlider(NumberSlider[int]):
 
     def _refresh_steps(self) -> None:
         """Refresh the slider page step and tick interval based on the range size."""
+
         range_size = self.maximum() - self.minimum()
         if range_size <= 10:
             tick_interval = 1
@@ -431,6 +432,7 @@ class FloatSlider(NumberSlider[float]):
 
     def set_decimals(self, decimals: int) -> None:
         """Set decimal precision for the slider."""
+
         self._decimals = decimals
         self._refresh_steps()
 
@@ -457,7 +459,11 @@ class FloatSlider(NumberSlider[float]):
         return float_value
 
     def _refresh_steps(self) -> None:
-        """Refresh the slider page step and tick interval based on the range size and decimal precision."""
+        """
+        Refresh the slider page step and tick interval based on the range size and
+        decimal precision.
+        """
+
         scale_factor = pow(10, self._decimals)
         int_min = int(self._minimum * scale_factor)
         int_max = int(self._maximum * scale_factor)
