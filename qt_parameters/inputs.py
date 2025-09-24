@@ -201,6 +201,9 @@ class FloatLineEdit(NumberLineEdit[float]):
 
     def _init_validator(self) -> None:
         self._validator = DoubleValidator()
+        # NOTE: Using QLocale.c() fixes validation issues in non-English locales that
+        # use comma decimal separators.
+        self._validator.setLocale(QtCore.QLocale.c())
         self._validator.setNotation(QtGui.QDoubleValidator.Notation.StandardNotation)
         self.setValidator(self._validator)
 
@@ -297,7 +300,7 @@ class DoubleValidator(QtGui.QDoubleValidator):
             float(text)
         except ValueError:
             characters = '+-01234567890.'
-            text = [t for t in text if t in characters]
+            text = ''.join(t for t in text if t in characters)
 
         try:
             value = float(text)
@@ -320,20 +323,26 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
         self.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBothSides)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
 
-    def _exponent(self) -> int:
-        """Return the exponent based on the minimum and maximum."""
+    @staticmethod
+    def _nice_number(value: float) -> float:
+        """Convert a number to the nearest 'human-friendly' value for UI display."""
 
-        num_range = abs(self.maximum() - self.minimum())
-        if num_range == 0:
-            num_range = 1
-        exponent = math.log10(num_range)
+        if value <= 0:
+            return 1
 
-        # Round exponent up or down with weighting towards down
-        if exponent % 1 > 0.8:
-            exponent = math.ceil(exponent)
+        exponent = math.floor(math.log10(value))
+        fraction = value / (10**exponent)
+
+        if fraction < 1.5:
+            nice_fraction = 1
+        elif fraction < 3:
+            nice_fraction = 2
+        elif fraction < 7:
+            nice_fraction = 5
         else:
-            exponent = math.floor(exponent)
-        return exponent
+            nice_fraction = 10
+
+        return nice_fraction * 10**exponent
 
 
 class IntSlider(NumberSlider[int]):
@@ -360,25 +369,19 @@ class IntSlider(NumberSlider[int]):
         self._refresh_steps()
 
     def _refresh_steps(self) -> None:
-        """Refresh the slider page step and tick interval based on the range size."""
+        """Refresh the slider ticks and steps based on the range size."""
 
-        range_size = self.maximum() - self.minimum()
+        range_size = max(1, self.maximum() - self.minimum())
         if range_size <= 10:
-            tick_interval = 1
-            page_step = max(1, range_size // 5)
-        elif range_size <= 100:
-            tick_interval = 5 if range_size <= 50 else 10
-            page_step = tick_interval * 2
-        elif range_size <= 1000:
-            tick_interval = 10
-            page_step = 50
+            step = 1
         else:
-            tick_interval = max(1, range_size // 100)
-            page_step = max(1, range_size // 10)
+            target_ticks = 10
+            ideal_spacing = range_size / target_ticks
+            step = self._nice_number(ideal_spacing)
 
         self.setSingleStep(1)
-        self.setPageStep(page_step)
-        self.setTickInterval(tick_interval)
+        self.setPageStep(int(step))
+        self.setTickInterval(int(step))
 
 
 class FloatSlider(NumberSlider[float]):
@@ -394,11 +397,6 @@ class FloatSlider(NumberSlider[float]):
         self._minimum = super().minimum()
         self._maximum = super().maximum()
         self._decimals = 2
-
-        self.setSingleStep(1)
-        self.setPageStep(10)
-        self.setTickInterval(10)
-
         self.valueChanged.connect(self._value_changed)
 
     def value(self) -> float:
@@ -431,8 +429,6 @@ class FloatSlider(NumberSlider[float]):
         self.set_value(value)
 
     def set_decimals(self, decimals: int) -> None:
-        """Set decimal precision for the slider."""
-
         self._decimals = decimals
         self._refresh_steps()
 
@@ -459,33 +455,24 @@ class FloatSlider(NumberSlider[float]):
         return float_value
 
     def _refresh_steps(self) -> None:
-        """
-        Refresh the slider page step and tick interval based on the range size and
-        decimal precision.
-        """
+        """Refresh the slider ticks and steps based on the range size and decimal precision."""
 
         scale_factor = pow(10, self._decimals)
-        int_min = int(self._minimum * scale_factor)
-        int_max = int(self._maximum * scale_factor)
-        range_size = int_max - int_min
+        int_min = int(round(self._minimum * scale_factor))
+        int_max = int(round(self._maximum * scale_factor))
+        range_size = max(1, int_max - int_min)
 
-        if self._decimals <= 1:
-            tick_interval = max(scale_factor // 10, range_size // 20)
-            page_step = tick_interval * 2
-        elif self._decimals == 2:
-            tick_interval = max(scale_factor // 20, range_size // 50)
-            page_step = max(scale_factor // 10, range_size // 10)
-        else:
-            tick_interval = max(scale_factor // 100, range_size // 100)
-            page_step = max(scale_factor // 10, range_size // 20)
+        target_ticks = 10
+        ideal_spacing = range_size / target_ticks
+        step = self._nice_number(ideal_spacing)
 
         self.blockSignals(True)
         self.setMinimum(int_min)
         self.setMaximum(int_max)
         self.blockSignals(False)
         self.setSingleStep(1)
-        self.setPageStep(max(1, page_step))
-        self.setTickInterval(max(1, tick_interval))
+        self.setPageStep(int(step))
+        self.setTickInterval(int(step))
 
     def _value_changed(self, value: int) -> None:
         """Emit a float signal on value change."""
