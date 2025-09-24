@@ -201,6 +201,9 @@ class FloatLineEdit(NumberLineEdit[float]):
 
     def _init_validator(self) -> None:
         self._validator = DoubleValidator()
+        # NOTE: Using QLocale.c() fixes validation issues in non-English locales that
+        # use comma decimal separators.
+        self._validator.setLocale(QtCore.QLocale.c())
         self._validator.setNotation(QtGui.QDoubleValidator.Notation.StandardNotation)
         self.setValidator(self._validator)
 
