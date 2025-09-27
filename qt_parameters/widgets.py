@@ -206,7 +206,7 @@ class FloatParameter(IntParameter):
     _slider_max: float = 1
     _line_min: float | None = None
     _line_max: float | None = None
-    _decimals: int = 4
+    _decimals: int = 2
 
     def _init_ui(self) -> None:
         # line
@@ -219,6 +219,7 @@ class FloatParameter(IntParameter):
         # slider
         self.slider = FloatSlider()
         self.slider.set_maximum(self._slider_max)
+        self.slider.set_decimals(self._decimals)
         self.slider.value_changed.connect(self._slider_value_changed)
         # prevent any size changes when slider shows
         self.slider.setMaximumHeight(self.line.minimumSizeHint().height())
@@ -233,6 +234,7 @@ class FloatParameter(IntParameter):
     def set_decimals(self, decimals: int) -> None:
         self._decimals = decimals
         self.line.set_decimals(decimals)
+        self.slider.set_decimals(decimals)
 
     def line_min(self) -> float:
         return super().line_min()
@@ -812,7 +814,7 @@ class MultiFloatParameter(MultiIntParameter):
     _line_max: float | None = None
     _slider_min: float = 0
     _slider_max: float = 1
-    _decimals: int = 4
+    _decimals: int = 2
 
     def _init_ui(self) -> None:
         # Lines
@@ -828,6 +830,7 @@ class MultiFloatParameter(MultiIntParameter):
         # Slider
         self.slider = FloatSlider()
         self.slider.set_maximum(self._slider_max)
+        self.slider.set_decimals(self._decimals)
         self.slider.value_changed.connect(self._slider_value_changed)
         # Prevent any size changes when slider shows
         line_height = self.lines[0].minimumSizeHint().height()
@@ -851,6 +854,7 @@ class MultiFloatParameter(MultiIntParameter):
         self._decimals = decimals
         for line in self.lines:
             line.set_decimals(decimals)
+        self.slider.set_decimals(decimals)
 
     def line_min(self) -> float:
         return super().line_min()

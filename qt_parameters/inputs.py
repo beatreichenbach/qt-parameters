@@ -323,20 +323,26 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
         self.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBothSides)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
 
-    def _exponent(self) -> int:
-        """Return the exponent based on the minimum and maximum."""
+    @staticmethod
+    def _nice_number(value: float) -> float:
+        """Convert a number to the nearest 'human-friendly' value for UI display."""
 
-        num_range = abs(self.maximum() - self.minimum())
-        if num_range == 0:
-            num_range = 1
-        exponent = math.log10(num_range)
+        if value <= 0:
+            return 1
 
-        # Round exponent up or down with weighting towards down
-        if exponent % 1 > 0.8:
-            exponent = math.ceil(exponent)
+        exponent = math.floor(math.log10(value))
+        fraction = value / (10**exponent)
+
+        if fraction < 1.5:
+            nice_fraction = 1
+        elif fraction < 3:
+            nice_fraction = 2
+        elif fraction < 7:
+            nice_fraction = 5
         else:
-            exponent = math.floor(exponent)
-        return exponent
+            nice_fraction = 10
+
+        return nice_fraction * 10**exponent
 
 
 class IntSlider(NumberSlider[int]):
@@ -363,13 +369,19 @@ class IntSlider(NumberSlider[int]):
         self._refresh_steps()
 
     def _refresh_steps(self) -> None:
-        """Refresh the slider ticks and steps based on the minimum and maximum."""
+        """Refresh the slider ticks and steps based on the range size."""
 
-        step = pow(10, max(self._exponent() - 2, 0))
+        range_size = max(1, self.maximum() - self.minimum())
+        if range_size <= 10:
+            step = 1
+        else:
+            target_ticks = 10
+            ideal_spacing = range_size / target_ticks
+            step = self._nice_number(ideal_spacing)
 
-        self.setSingleStep(step)
-        self.setPageStep(step * 10)
-        self.setTickInterval(step * 10)
+        self.setSingleStep(1)
+        self.setPageStep(int(step))
+        self.setTickInterval(int(step))
 
 
 class FloatSlider(NumberSlider[float]):
@@ -384,11 +396,7 @@ class FloatSlider(NumberSlider[float]):
 
         self._minimum = super().minimum()
         self._maximum = super().maximum()
-
-        self.setSingleStep(1)
-        self.setPageStep(10)
-        self.setTickInterval(10)
-
+        self._decimals = 2
         self.valueChanged.connect(self._value_changed)
 
     def value(self) -> float:
@@ -420,6 +428,10 @@ class FloatSlider(NumberSlider[float]):
         self._refresh_steps()
         self.set_value(value)
 
+    def set_decimals(self, decimals: int) -> None:
+        self._decimals = decimals
+        self._refresh_steps()
+
     def _int(self, value: float) -> int:
         """Return an int value in slider scale."""
 
@@ -443,16 +455,24 @@ class FloatSlider(NumberSlider[float]):
         return float_value
 
     def _refresh_steps(self) -> None:
-        """Refresh the slider ticks and steps based on the minimum and maximum."""
+        """Refresh the slider ticks and steps based on the range size and decimal precision."""
 
-        # Find a value that brings the float range into an int range
-        # with step size locked to 1 and 10
-        step = pow(10, -(self._exponent() - 2))
+        scale_factor = pow(10, self._decimals)
+        int_min = int(round(self._minimum * scale_factor))
+        int_max = int(round(self._maximum * scale_factor))
+        range_size = max(1, int_max - int_min)
+
+        target_ticks = 10
+        ideal_spacing = range_size / target_ticks
+        step = self._nice_number(ideal_spacing)
 
         self.blockSignals(True)
-        self.setMinimum(int(self._minimum * step))
-        self.setMaximum(int(self._maximum * step))
+        self.setMinimum(int_min)
+        self.setMaximum(int_max)
         self.blockSignals(False)
+        self.setSingleStep(1)
+        self.setPageStep(int(step))
+        self.setTickInterval(int(step))
 
     def _value_changed(self, value: int) -> None:
         """Emit a float signal on value change."""
