@@ -313,67 +313,7 @@ class DoubleValidator(QtGui.QDoubleValidator):
 
 
 class NumberSlider(QtWidgets.QSlider, Generic[N]):
-    def __init__(
-        self,
-        orientation: QtCore.Qt.Orientation = QtCore.Qt.Orientation.Horizontal,
-        parent: QtWidgets.QWidget | None = None,
-    ) -> None:
-        super().__init__(orientation, parent)
-
-        self.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBothSides)
-        self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
-
-    def _exponent(self) -> int:
-        """Return the exponent based on the minimum and maximum."""
-
-        num_range = abs(self.maximum() - self.minimum())
-        if num_range == 0:
-            num_range = 1
-        exponent = math.log10(num_range)
-
-        # Round exponent up or down with weighting towards down
-        if exponent % 1 > 0.8:
-            exponent = math.ceil(exponent)
-        else:
-            exponent = math.floor(exponent)
-        return exponent
-
-
-class IntSlider(NumberSlider[int]):
-    value_changed = QtCore.Signal(int)
-
-    def __init__(
-        self,
-        orientation: QtCore.Qt.Orientation = QtCore.Qt.Orientation.Horizontal,
-        parent: QtWidgets.QWidget | None = None,
-    ) -> None:
-        super().__init__(orientation, parent)
-
-        self.valueChanged.connect(self.value_changed)
-
-    def set_value(self, value: int) -> None:
-        self.setSliderPosition(value)
-
-    def set_minimum(self, value: int) -> None:
-        self.setMinimum(value)
-        self._refresh_steps()
-
-    def set_maximum(self, value: int) -> None:
-        self.setMaximum(value)
-        self._refresh_steps()
-
-    def _refresh_steps(self) -> None:
-        """Refresh the slider ticks and steps based on the minimum and maximum."""
-
-        step = pow(10, max(self._exponent() - 2, 0))
-
-        self.setSingleStep(step)
-        self.setPageStep(step * 10)
-        self.setTickInterval(step * 10)
-
-
-class FloatSlider(NumberSlider[float]):
-    value_changed = QtCore.Signal(float)
+    value_changed = QtCore.Signal(Number)
 
     def __init__(
         self,
@@ -384,23 +324,24 @@ class FloatSlider(NumberSlider[float]):
 
         self._minimum = super().minimum()
         self._maximum = super().maximum()
+        self._step_factor = 2
 
-        self.setSingleStep(1)
-        self.setPageStep(10)
-        self.setTickInterval(10)
+        self.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBothSides)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
 
         self.valueChanged.connect(self._value_changed)
 
-    def value(self) -> float:
+    def value(self) -> N:
         value = super().value()
-        float_value = self._float(value)
-        return float_value
+        real_value = self._real_value(value)
+        return real_value
 
-    def set_value(self, value: float) -> None:
+    def set_value(self, value: N) -> None:
         if math.isnan(value):
             return
-        int_value = self._int(value)
-        self.setSliderPosition(int_value)
+        slider_value = self._slider_value(value)
+        self.setSliderPosition(slider_value)
+
 
     def minimum(self) -> float:
         return self._minimum
@@ -420,8 +361,20 @@ class FloatSlider(NumberSlider[float]):
         self._refresh_steps()
         self.set_value(value)
 
-    def _int(self, value: float) -> int:
-        """Return an int value in slider scale."""
+    def step_factor(self) -> int:
+        return self._step_factor
+
+    def set_step_factor(self, factor: int) -> None:
+        """
+        Set the step factor for the slider. The higher the factor, the smaller the step
+        size and page size.
+        """
+
+        self._step_factor = factor
+        self._refresh_steps()
+
+    def _slider_value(self, value: N) -> int:
+        """Return the value for the slider from the 'real' value."""
 
         try:
             percentage = (value - self._minimum) / (self._maximum - self._minimum)
@@ -431,35 +384,78 @@ class FloatSlider(NumberSlider[float]):
         clamped_value = min(max(percentage, 0), 1) * slider_range + super().minimum()
         return int(clamped_value)
 
-    def _float(self, value: int) -> float:
-        """Return a float value in slider scale."""
+    def _real_value(self, value: int) -> N:
+        """Return the 'real' value from the slider value."""
 
         slider_range = super().maximum() - super().minimum()
         try:
             percentage = (value - super().minimum()) / slider_range
         except ZeroDivisionError:
             return float('nan')
-        float_value = self._minimum + (self._maximum - self._minimum) * percentage
-        return float_value
+        real_value = self._minimum + (self._maximum - self._minimum) * percentage
+        return real_value
+
+
+    def _exponent(self) -> int:
+        """Return the exponent based on the minimum and maximum."""
+
+        num_range = abs(self.maximum() - self.minimum())
+        if num_range == 0:
+            num_range = 1
+        exponent = math.log10(num_range)
+
+        # Round exponent up or down with weighting towards down
+        if exponent % 1 > 0.8:
+            exponent = math.ceil(exponent)
+        else:
+            exponent = math.floor(exponent)
+        return exponent
+
 
     def _refresh_steps(self) -> None:
         """Refresh the slider ticks and steps based on the minimum and maximum."""
 
-        # Find a value that brings the float range into an int range
-        # with step size locked to 1 and 10
-        step = pow(10, -(self._exponent() - 2))
+        value = self.value()
+
+        page_step = max(10, pow(10, self._step_factor - 1))
+        self.setSingleStep(1)
+        self.setPageStep(page_step)
+        self.setTickInterval(page_step)
+
+        factor = self._slider_factor()
 
         self.blockSignals(True)
-        self.setMinimum(int(self._minimum * step))
-        self.setMaximum(int(self._maximum * step))
+        self.setMinimum(int(self._minimum * factor))
+        self.setMaximum(int(self._maximum * factor))
+        self.set_value(value)
         self.blockSignals(False)
 
-    def _value_changed(self, value: int) -> None:
-        """Emit a float signal on value change."""
+    def _slider_factor(self) -> float:
+        """
+        Return the scale factor for the slider to convert the real range into the
+        slider range.
+        """
 
-        value = self._float(value)
+        factor = pow(10, -(self._exponent() - self._step_factor))
+        return factor
+
+    def _value_changed(self, value: int) -> None:
+        """Emit a signal on value change with the real value."""
+
+        value = self._real_value(value)
         if not math.isnan(value):
             self.value_changed.emit(value)
+
+class IntSlider(NumberSlider[int]):
+    value_changed = QtCore.Signal(int)
+
+    def _slider_factor(self) -> float:
+        factor = pow(10, -(self._exponent() - self._step_factor))
+        factor = min(1, factor)
+        return factor
+
+class FloatSlider(NumberSlider[float]):
+    value_changed = QtCore.Signal(float)
 
 
 class RatioButton(QtWidgets.QPushButton):

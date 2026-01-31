@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from collections.abc import Collection, Mapping, Sequence
 from enum import Enum, EnumMeta, auto
 from functools import partial
@@ -50,7 +49,6 @@ class ParameterWidget(QtWidgets.QWidget):
         self._layout.setContentsMargins(QtCore.QMargins())
         self.setLayout(self._layout)
 
-    @abstractmethod
     def _init_ui(self) -> None: ...
 
     def value(self) -> Any:
@@ -101,6 +99,7 @@ class IntParameter(ParameterWidget):
     _line_max: int | None = None
     _slider_visible: bool = True
     _commit_on_edit: bool = False
+    _step_factor: int = 2
 
     def _init_ui(self) -> None:
         # Line
@@ -165,6 +164,13 @@ class IntParameter(ParameterWidget):
     def set_slider_visible(self, slider_visible: bool) -> None:
         self._slider_visible = slider_visible
         self._toggle_slider(slider_visible)
+
+    def step_factor(self) -> int:
+        return self._step_factor
+
+    def set_step_factor(self, factor: int) -> None:
+        self._step_factor = factor
+        self.slider.set_step_factor(factor)
 
     def value(self) -> int:
         return super().value()

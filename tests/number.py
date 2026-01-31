@@ -55,6 +55,30 @@ class WidgetGallery(QtWidgets.QWidget):
         parm.set_default(1)
         form.add_parameter(parm)
 
+        # Int Step Sizes
+        form = ParameterForm('int_step_sizes')
+        parameter_form.add_form(form)
+
+        parm = IntParameter('int_step_1')
+        parm.set_slider_min(0)
+        parm.set_slider_max(1000)
+        parm.set_default(100)
+        parm.set_step_factor(1)
+        form.add_parameter(parm)
+
+        parm = IntParameter('int_step_2')
+        parm.set_slider_min(0)
+        parm.set_slider_max(1000)
+        parm.set_default(100)
+        form.add_parameter(parm)
+
+        parm = IntParameter('int_step_3')
+        parm.set_slider_min(0)
+        parm.set_slider_max(1000)
+        parm.set_default(100)
+        parm.set_step_factor(3)
+        form.add_parameter(parm)
+
         # Float Ticks
         form = ParameterForm('float_ticks')
         parameter_form.add_form(form)
@@ -104,6 +128,30 @@ class WidgetGallery(QtWidgets.QWidget):
         parm.set_default(0.0001)
         form.add_parameter(parm)
 
+
+        # Float Step Sizes
+        form = ParameterForm('float_step_sizes')
+        parameter_form.add_form(form)
+
+        parm = FloatParameter('float_step_2')
+        parm.set_slider_min(0)
+        parm.set_slider_max(1000)
+        parm.set_default(100)
+        form.add_parameter(parm)
+
+        parm = FloatParameter('float_step_3')
+        parm.set_slider_min(0)
+        parm.set_slider_max(1000)
+        parm.set_default(100)
+        parm.set_step_factor(3)
+        form.add_parameter(parm)
+
+        parm = FloatParameter('float_step_4')
+        parm.set_slider_min(0)
+        parm.set_slider_max(1000)
+        parm.set_default(100)
+        parm.set_step_factor(4)
+        form.add_parameter(parm)
 
 def main() -> None:
     logging.basicConfig(level=logging.DEBUG, force=True)
