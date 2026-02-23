@@ -282,7 +282,8 @@ class StringParameter(ParameterWidget):
     _default: str = ''
     _placeholder: str = ''
     _area: bool = False
-    _menu: Collection | None = None
+    _menu: QtWidgets.QMenu | None = None
+    _menu_data: Collection | None = None
     _menu_mode: MenuMode = MenuMode.REPLACE
 
     def _init_ui(self) -> None:
@@ -316,14 +317,22 @@ class StringParameter(ParameterWidget):
             self.text.deleteLater()
             self._init_text()
 
-    def menu(self) -> Collection | None:
+    def menu(self) -> QtWidgets.QMenu:
+        if self._menu is None:
+            self._menu = self._build_menu(self._menu_data)
         return self._menu
 
     def set_menu(self, menu: Collection | None) -> None:
-        self._menu = menu
+        """
+        Set the menu used to populate the parameter.
+        The menu can be a Sequence of values or a dictionary of label: value pairs.
+        """
+
+        self._menu_data = menu
+        self._menu = None
 
         # Update menu
-        if not self._area and self._menu is not None:
+        if not self._area and self._menu_data is not None:
             if not self.menu_button.defaultAction():
                 # build dynamically for optimization
                 icon = MaterialIcon('expand_more')
@@ -376,6 +385,8 @@ class StringParameter(ParameterWidget):
     def _build_menu(
         self, content: Collection, menu: QtWidgets.QMenu | None = None
     ) -> QtWidgets.QMenu:
+        """Recursively build the QMenu from content."""
+
         if menu is None:
             menu = QtWidgets.QMenu(self)
         if isinstance(content, Sequence):
@@ -415,7 +426,7 @@ class StringParameter(ParameterWidget):
         relative_pos.setX(relative_pos.x() + 2)
         position = self.menu_button.mapToGlobal(relative_pos)
 
-        menu = self._build_menu(self._menu)
+        menu = self.menu()
         menu.exec_(position)
         self.menu_button.setDown(False)
 
