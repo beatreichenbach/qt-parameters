@@ -196,7 +196,7 @@ class ParameterForm(QtWidgets.QWidget):
                 form.set_state(form_state)
 
     def values(self) -> dict[str, Any]:
-        """Return a dict of all values."""
+        """Return a nested dict of all values."""
 
         widgets = self.widgets()
         values = {}
@@ -228,6 +228,22 @@ class ParameterForm(QtWidgets.QWidget):
                 if value:
                     if form := self.form(name.replace('_enabled', '')):
                         widget.setCurrentWidget(form)
+
+    def defaults(self) -> dict[str, Any]:
+        """Return a nested dict of all defaults."""
+
+        widgets = self.widgets()
+        defaults = {}
+        for name, widget in widgets.items():
+            if isinstance(widget, ParameterWidget):
+                defaults[name] = widget.default()
+            elif isinstance(widget, ParameterForm):
+                defaults[name] = widget.defaults()
+            elif isinstance(widget, RadioTabWidget):
+                if form := self.form(name.replace('_enabled', '')):
+                    defaults[name] = widget.currentWidget() == form
+        return defaults
+
 
     def set_defaults(self, values: dict) -> None:
         """Set the default values of ParameterWidgets in the form."""

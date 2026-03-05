@@ -153,6 +153,9 @@ class EditorGallery(QtWidgets.QWidget):
             values = editor.values()
             logging.debug(json.dumps(values, indent=4, default=lambda x: str(x)))
 
+            defaults = editor.defaults()
+            logging.debug(json.dumps(defaults, indent=4, default=lambda x: str(x)))
+
     def _init_ui(self) -> None:
         self.setWindowTitle('Parameter Editors')
         self.resize(640, 840)
