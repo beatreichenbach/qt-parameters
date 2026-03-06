@@ -1,5 +1,38 @@
 # CHANGELOG
 
+<!-- version list -->
+
+## v1.3.1 (2026-03-05)
+
+### Bug Fixes
+
+- **editor**: Add defaults function
+  ([`b312df0`](https://github.com/beatreichenbach/qt-parameters/commit/b312df08b473684ce984e39a4fcef254d5712b23))
+
+- **parameters**: Return QMenu
+  ([`d229e82`](https://github.com/beatreichenbach/qt-parameters/commit/d229e82a2deabf68c9981909f04c1a8e5bfddc4b))
+
+
+## v1.3.0 (2026-01-31)
+
+### Bug Fixes
+
+- **inputs**: Convert to string
+  ([`9c163d7`](https://github.com/beatreichenbach/qt-parameters/commit/9c163d752bc63ebcdc23624ae86ec8dfe1204ba4))
+
+- **inputs**: Use QLocale.c() in validator
+  ([`bb06576`](https://github.com/beatreichenbach/qt-parameters/commit/bb06576050f29df6e042f3266bea8a58627de3b8))
+
+### Features
+
+- **inputs**: Add step factor
+  ([`de50f6d`](https://github.com/beatreichenbach/qt-parameters/commit/de50f6d6df4ce2acea96e223baf85344453ec463))
+
+### Testing
+
+- Add number widget gallery
+  ([`2be3ff8`](https://github.com/beatreichenbach/qt-parameters/commit/2be3ff88080199fd02c2dfd1272ab39f449495ac))
+
 
 ## v1.2.0 (2025-08-03)
 
@@ -139,8 +172,6 @@
 - **editor**: Simplify parameter form and editor
   ([`df3c7e1`](https://github.com/beatreichenbach/qt-parameters/commit/df3c7e1b30e16f7e34af2c7afa159e6d0766f0ce))
 
-BREAKING CHANGE: ParameterBox, ParameterTabWidget and many methods have been deprecated.
-
 - **parameters**: Add menu mode to StringParameter
   ([`c3fdb2e`](https://github.com/beatreichenbach/qt-parameters/commit/c3fdb2eeefc3eb9e435c69b6503458201cb1084d))
 
@@ -152,27 +183,4 @@ BREAKING CHANGE: ParameterBox, ParameterTabWidget and many methods have been dep
 
 ## v0.1.0 (2025-01-20)
 
-### Bug Fixes
-
-- Import classes in module
-  ([`a64ff85`](https://github.com/beatreichenbach/qt-parameters/commit/a64ff85abe2378fcbef99ede087df90ec6a7d9bb))
-
-### Build System
-
-- Update dependency
-  ([`8e9bcfe`](https://github.com/beatreichenbach/qt-parameters/commit/8e9bcfefcfe69fdc82c3b8466d1683e70c0898a1))
-
-### Documentation
-
-- Update examples
-  ([`20a259b`](https://github.com/beatreichenbach/qt-parameters/commit/20a259bbdf4b8e4473c164f038013478d10db92d))
-
-### Features
-
-- Inital commit
-  ([`b45c2e0`](https://github.com/beatreichenbach/qt-parameters/commit/b45c2e0a38967de637815d8a59749ab24bd3f3e1))
-
-### Refactoring
-
-- Replace ParameterToggle with BoolParameter
-  ([`f02a392`](https://github.com/beatreichenbach/qt-parameters/commit/f02a392d6d70c6bec19af687826db7a589605aa6))
+- Initial Release
