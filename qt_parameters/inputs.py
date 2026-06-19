@@ -191,6 +191,13 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
 class IntLineEdit(NumberLineEdit[int]):
     value_changed = QtCore.Signal(int)
 
+    def _init_validator(self) -> None:
+        self._validator = IntValidator()
+        # NOTE: Using QLocale.c() fixes validation issues in non-English locales that
+        # use period thousand separators.
+        self._validator.setLocale(QtCore.QLocale.c())
+        self.setValidator(self._validator)
+
 
 class FloatLineEdit(NumberLineEdit[float]):
     value_changed = QtCore.Signal(float)
