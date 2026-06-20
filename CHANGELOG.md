@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.3.2 (2026-06-20)
+
+### Bug Fixes
+
+- **inputs**: Move _init_validator to NumberLineEdit.
+  ([`e7bc36c`](https://github.com/beatreichenbach/qt-parameters/commit/e7bc36cf6a7874299a77ea4a03553a4608db3566))
+
+- **inputs**: Set locale for IntLineEdit
+  ([`ba53d8b`](https://github.com/beatreichenbach/qt-parameters/commit/ba53d8b79bccb9cd4c80fe564cddb23139d4a94a))
+
+### Code Style
+
+- Change changelog template
+  ([`9493876`](https://github.com/beatreichenbach/qt-parameters/commit/9493876a42a3da6ef02cc361d143fd8bc31d6f1b))
+
+
 ## v1.3.1 (2026-03-05)
 
 ### Bug Fixes
