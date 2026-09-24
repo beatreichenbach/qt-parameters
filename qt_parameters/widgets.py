@@ -526,6 +526,11 @@ class ComboParameter(ParameterWidget):
         return self._items
 
     def set_items(self, items: Collection) -> None:
+        """
+        Set the items of the parameter.
+        `items` is either a sequence or dictionary with format (label, data).
+        """
+
         if isinstance(items, Mapping):
             items = tuple(items.items())
         else:
@@ -557,6 +562,7 @@ class ComboParameter(ParameterWidget):
 
     def _index_from_value(self, value: Any) -> int:
         """Return the index for a value, searching text and data."""
+
         if value is None:
             return -1
 
