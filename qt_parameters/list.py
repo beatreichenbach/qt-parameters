@@ -22,7 +22,7 @@ class DragItem(QtWidgets.QFrame):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent=parent)
 
-        self._widget = None
+        self._widget = QtWidgets.QWidget()
 
         self._init_ui()
 
@@ -41,7 +41,6 @@ class DragItem(QtWidgets.QFrame):
         self._layout.addWidget(self.drag_label)
         self._layout.setStretch(0, 0)
 
-        self._widget = QtWidgets.QWidget()
         self._layout.addWidget(self._widget)
         self._layout.setStretch(1, 1)
 
@@ -197,10 +196,11 @@ class DragWidget(QtWidgets.QWidget):
         """
 
         pos_y = position.y() + self._drag_offset
-        self._drag_item.move(self._drag_item.x(), pos_y)
+        if self._drag_item:
+            self._drag_item.move(self._drag_item.x(), pos_y)
 
         index = self._get_index(position)
-        if index >= 0:
+        if index >= 0 and self._placeholder:
             self._move_item(self._placeholder, index)
 
     def _drag_ended(self) -> None:
@@ -239,9 +239,10 @@ class DragWidget(QtWidgets.QWidget):
 
         i = -1
         for i in range(self._item_layout.count()):
-            if widget := self._item_layout.itemAt(i).widget():
-                if position.y() < widget.y() + widget.height():
-                    return i
+            if item := self._item_layout.itemAt(i):
+                if widget := item.widget():
+                    if position.y() < widget.y() + widget.height():
+                        return i
         return i
 
     def _move_item(self, widget: QtWidgets.QWidget, index: int) -> None:
@@ -254,7 +255,7 @@ class DragWidget(QtWidgets.QWidget):
     def _refresh_tab_order(self) -> None:
         """Refresh the TabOrder from the start to the end of the layout."""
 
-        first = None
+        first: QtWidgets.QWidget | None = None
         for i in range(self._item_layout.count()):
             if item := self._item_layout.itemAt(i):
                 if widget := item.widget():
@@ -360,7 +361,7 @@ class StringListParameter(StringParameter):
         elif self._menu_mode == StringParameter.MenuMode.TOGGLE:
             values = self._value
             if value in values:
-                values = (v for v in values if v != value)
+                values = tuple(v for v in values if v != value)
             else:
                 values = (*values, value)
             self.set_value(values)

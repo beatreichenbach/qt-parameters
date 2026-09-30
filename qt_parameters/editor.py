@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -10,6 +10,9 @@ from .box import CollapsibleBox
 from .rediotab import RadioTabWidget
 from .scrollarea import VerticalScrollArea
 from .widgets import BoolParameter, ParameterWidget
+
+Boxes = tuple[str, ...]
+State = dict[str, 'State | Boxes']
 
 
 class Separator(QtWidgets.QWidget):
@@ -43,22 +46,24 @@ class ParameterToolTip(QtWidgets.QFrame):
         )
         self.setPalette(palette)
 
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self.layout().setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetFixedSize)
+        layout = QtWidgets.QVBoxLayout()
+        self.setLayout(layout)
+
+        layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetFixedSize)
 
         title = QtWidgets.QLabel(widget.label(), self)
         font = title.font()
         font.setBold(True)
         title.setFont(font)
-        self.layout().addWidget(title)
+        layout.addWidget(title)
 
         separator = QtWidgets.QFrame(self)
         separator.setFrameShape(QtWidgets.QFrame.Shape.HLine)
-        self.layout().addWidget(separator)
+        layout.addWidget(separator)
 
         typ = type(widget).__name__.replace('Parameter', '')
         detail = QtWidgets.QLabel(f'Parameter: {widget.name()} ({typ})', self)
-        self.layout().addWidget(detail)
+        layout.addWidget(detail)
 
         tooltip = QtWidgets.QLabel(widget.tooltip(), self)
         # tooltip.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
@@ -66,7 +71,7 @@ class ParameterToolTip(QtWidgets.QFrame):
         tooltip.setAlignment(
             QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft
         )
-        self.layout().addWidget(tooltip)
+        layout.addWidget(tooltip)
 
     def focusOutEvent(self, event: QtCore.QEvent) -> None:
         self.hide()
@@ -94,12 +99,17 @@ class ParameterLabel(QtWidgets.QLabel):
 
     def show_tooltip(self) -> None:
         global_position = QtGui.QCursor.pos()
-        if self.geometry().contains(self.parent().mapFromGlobal(global_position)):
-            if self._tooltip is None:
-                self._tooltip = ParameterToolTip(self._widget)
-                self._tooltip.setParent(self.window(), QtCore.Qt.WindowType.ToolTip)
-            self._tooltip.move(global_position)
-            self._tooltip.show()
+        parent = self.parent()
+        if isinstance(parent, QtWidgets.QWidget):
+            if self.geometry().contains(parent.mapFromGlobal(global_position)):
+                if self._tooltip is None:
+                    tooltip = ParameterToolTip(self._widget)
+                    tooltip.setParent(self.window(), QtCore.Qt.WindowType.ToolTip)
+                    self._tooltip = tooltip
+                else:
+                    tooltip = self._tooltip
+                tooltip.move(global_position)
+                tooltip.show()
 
 
 class LabelFilter(QtCore.QObject):
@@ -174,7 +184,7 @@ class ParameterForm(QtWidgets.QWidget):
         """
         self._root = root
 
-    def state(self) -> dict:
+    def state(self) -> State:
         """Return the state of the form as a dict."""
 
         state = {}
@@ -185,14 +195,15 @@ class ParameterForm(QtWidgets.QWidget):
                 state[form.name()] = form_state
         return state
 
-    def set_state(self, state: dict) -> None:
+    def set_state(self, state: State) -> None:
         """Load the state of the form from a dict."""
 
         boxes = state.get('collapsed_boxes')
-        if boxes is not None:
+        if isinstance(boxes, tuple):
             self._set_collapsed_boxes(boxes)
         for form in self.forms():
-            if form_state := state.get(form.name()):
+            form_state = state.get(form.name())
+            if isinstance(form_state, dict):
                 form.set_state(form_state)
 
     def values(self) -> dict[str, Any]:
@@ -259,7 +270,7 @@ class ParameterForm(QtWidgets.QWidget):
         """Reset all parameters in this form to their default values."""
 
         widgets = self.widgets()
-        for name, widget in widgets.items():
+        for _name, widget in widgets.items():
             if isinstance(widget, (ParameterWidget, ParameterForm)):
                 widget.reset()
             elif isinstance(widget, CollapsibleBox):
@@ -450,7 +461,8 @@ class ParameterForm(QtWidgets.QWidget):
         index = self._layout.indexOf(parameter)
         if index < 0:
             return
-        row, column, row_span, col_span = self._layout.getItemPosition(index)
+
+        row = ParameterForm._layout_row(self._layout, index)
         for i in range(3):
             if item := self._layout.itemAtPosition(row, i):
                 if widget := item.widget():
@@ -555,11 +567,7 @@ class ParameterForm(QtWidgets.QWidget):
                     widgets.update(widget.widgets())
                 else:
                     widgets[name] = widget
-            elif (
-                isinstance(widget, ParameterWidget)
-                or isinstance(widget, CollapsibleBox)
-                or isinstance(widget, RadioTabWidget)
-            ):
+            elif isinstance(widget, (ParameterWidget, CollapsibleBox, RadioTabWidget)):
                 widgets[name] = widget
         return widgets
 
@@ -572,7 +580,7 @@ class ParameterForm(QtWidgets.QWidget):
             if layout and isinstance(layout, QtWidgets.QGridLayout):
                 index = layout.indexOf(parameter)
                 if index >= 0:
-                    row, column, row_span, col_span = layout.getItemPosition(index)
+                    row = ParameterForm._layout_row(layout, index)
                     if item := layout.itemAtPosition(row, 0):
                         if widget := item.widget():
                             if isinstance(widget, BoolParameter):
@@ -588,7 +596,7 @@ class ParameterForm(QtWidgets.QWidget):
             if layout and isinstance(layout, QtWidgets.QGridLayout):
                 index = layout.indexOf(parameter)
                 if index >= 0:
-                    row, column, row_span, col_span = layout.getItemPosition(index)
+                    row = ParameterForm._layout_row(layout, index)
                     if item := layout.itemAtPosition(row, 1):
                         if widget := item.widget():
                             if isinstance(widget, ParameterLabel):
@@ -645,6 +653,16 @@ class ParameterForm(QtWidgets.QWidget):
 
         if name in names:
             raise ValueError(f'name {name!r} is not unique')
+
+    @staticmethod
+    def _layout_row(layout: QtWidgets.QGridLayout, index: int) -> int:
+        """Return the row from a QGridLayout `index`."""
+
+        item_position = layout.getItemPosition(index)
+        row, _column, _row_span, _col_span = cast(
+            tuple[int, int, int, int], item_position
+        )
+        return row
 
 
 class ParameterEditor(ParameterForm):

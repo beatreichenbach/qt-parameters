@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import numbers
-import typing
 from collections.abc import Sequence
 
 from qtpy import QtCore, QtGui, QtWidgets
@@ -10,13 +9,16 @@ from .qt_material_icons import MaterialIcon
 from .resizegrip import ResizeGrip
 from .widgets import FloatParameter, IntParameter, ParameterWidget
 
+ModelIndex = QtCore.QModelIndex | QtCore.QPersistentModelIndex
+Locale = QtCore.QLocale | QtCore.QLocale.Language
+
 
 class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
     def setModelData(
         self,
         editor: QtWidgets.QWidget,
         model: QtCore.QAbstractItemModel,
-        index: QtCore.QModelIndex,
+        index: ModelIndex,
     ) -> None:
         indexes = self.selected_indexes(index)
         model.blockSignals(True)
@@ -25,19 +27,21 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
                 model.blockSignals(False)
             super().setModelData(editor, model, index)
 
-    def selected_indexes(self, current_index: QtCore.QModelIndex | None):
-        indexes = []
+    def selected_indexes(
+        self, current_index: ModelIndex | None
+    ) -> tuple[ModelIndex, ...]:
+        indexes: list[ModelIndex] = []
         if (parent := self.parent()) and isinstance(parent, QtWidgets.QTreeView):
-            indexes = parent.selectedIndexes()
+            indexes.extend(parent.selectedIndexes())
         if current_index is not None and current_index not in indexes:
             indexes.append(current_index)
-        return indexes
+        return tuple(indexes)
 
     def set_edit_data(
         self,
-        value: typing.Any,
+        value: object,
         model: QtCore.QAbstractItemModel,
-        index: QtCore.QModelIndex,
+        index: ModelIndex,
     ) -> None:
         indexes = self.selected_indexes(index)
         model.blockSignals(True)
@@ -48,14 +52,14 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class IntegerDelegate(StyledItemDelegate):
-    def displayText(self, value: typing.Any, locale: QtCore.QLocale) -> str:
+    def displayText(self, value: int, locale: Locale) -> str:
         return str(value)
 
     def createEditor(
         self,
         parent: QtWidgets.QWidget,
         option: QtWidgets.QStyleOptionViewItem,
-        index: QtCore.QModelIndex,
+        index: ModelIndex,
     ) -> QtWidgets.QWidget:
         editor = IntParameter(parent=parent)
         editor.set_slider_visible(False)
@@ -63,9 +67,7 @@ class IntegerDelegate(StyledItemDelegate):
         editor.line.setFrame(False)
         return editor
 
-    def setEditorData(
-        self, editor: QtWidgets.QWidget, index: QtCore.QModelIndex
-    ) -> None:
+    def setEditorData(self, editor: QtWidgets.QWidget, index: ModelIndex) -> None:
         value = index.model().data(index, QtCore.Qt.ItemDataRole.EditRole)
         if value and isinstance(editor, IntParameter):
             editor.set_value(value)
@@ -74,7 +76,7 @@ class IntegerDelegate(StyledItemDelegate):
         self,
         editor: QtWidgets.QWidget,
         model: QtCore.QAbstractItemModel,
-        index: QtCore.QModelIndex,
+        index: ModelIndex,
     ) -> None:
         if isinstance(editor, IntParameter):
             value = editor.value()
@@ -84,7 +86,7 @@ class IntegerDelegate(StyledItemDelegate):
         self,
         editor: QtWidgets.QWidget,
         option: QtWidgets.QStyleOptionViewItem,
-        index: QtCore.QModelIndex,
+        index: ModelIndex,
     ) -> None:
         editor.setGeometry(option.rect)
 
@@ -94,7 +96,7 @@ class FloatDelegate(StyledItemDelegate):
         super().__init__(parent)
         self.decimals = None
 
-    def displayText(self, value: typing.Any, locale: QtCore.QLocale) -> str:
+    def displayText(self, value: float, locale: Locale) -> str:
         if self.decimals is not None:
             return f'{value:.{self.decimals}f}'.rstrip('0').rstrip('.')
         else:
@@ -104,7 +106,7 @@ class FloatDelegate(StyledItemDelegate):
         self,
         parent: QtWidgets.QWidget,
         option: QtWidgets.QStyleOptionViewItem,
-        index: QtCore.QModelIndex,
+        index: ModelIndex,
     ) -> QtWidgets.QWidget:
         editor = FloatParameter(parent=parent)
         editor.set_slider_visible(False)
@@ -113,9 +115,7 @@ class FloatDelegate(StyledItemDelegate):
         editor.line.setFrame(False)
         return editor
 
-    def setEditorData(
-        self, editor: QtWidgets.QWidget, index: QtCore.QModelIndex
-    ) -> None:
+    def setEditorData(self, editor: QtWidgets.QWidget, index: ModelIndex) -> None:
         value = index.model().data(index, QtCore.Qt.ItemDataRole.EditRole)
         if value and isinstance(editor, FloatParameter):
             editor.set_value(value)
@@ -124,7 +124,7 @@ class FloatDelegate(StyledItemDelegate):
         self,
         editor: QtWidgets.QWidget,
         model: QtCore.QAbstractItemModel,
-        index: QtCore.QModelIndex,
+        index: ModelIndex,
     ) -> None:
         if isinstance(editor, FloatParameter):
             value = editor.value()
@@ -134,7 +134,7 @@ class FloatDelegate(StyledItemDelegate):
         self,
         editor: QtWidgets.QWidget,
         option: QtWidgets.QStyleOptionViewItem,
-        index: QtCore.QModelIndex,
+        index: ModelIndex,
     ) -> None:
         editor.setGeometry(option.rect)
 
@@ -143,12 +143,12 @@ class DataTableModel(QtGui.QStandardItemModel):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self.types = []
+        self.types: tuple[type | None, ...] = ()
 
     def setData(
         self,
-        index: QtCore.QModelIndex,
-        value: typing.Any,
+        index: ModelIndex,
+        value: object,
         role: int = QtCore.Qt.ItemDataRole.EditRole,
     ) -> bool:
         if role == QtCore.Qt.ItemDataRole.EditRole:
@@ -276,20 +276,21 @@ class TabDataParameter(ParameterWidget):
     _value: tuple = ()
     _default: tuple = ()
     _headers: tuple[str, ...] = ()
-    _types: tuple[type, ...] = ()
+    _types: tuple[type | None, ...] = ()
     _start_index: int = 0
     _decimals: int = 3
 
-    def __init__(
-        self, name: str | None = None, parent: QtWidgets.QWidget | None = None
-    ) -> None:
-        self._delegates = []
+    def __init__(self, name: str = '', parent: QtWidgets.QWidget | None = None) -> None:
+        self._delegates: list[QtWidgets.QStyledItemDelegate] = []
         super().__init__(name, parent)
 
     def _init_ui(self) -> None:
-        QtWidgets.QWidget().setLayout(self.layout())
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self.layout().setContentsMargins(0, 0, 0, 0)
+        parameter_layout = self.layout()
+        if isinstance(parameter_layout, QtWidgets.QLayout):
+            QtWidgets.QWidget().setLayout(parameter_layout)
+        layout = QtWidgets.QVBoxLayout()
+        self.setLayout(layout)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         # TableView
         self.model = DataTableModel(parent=self)
@@ -299,7 +300,7 @@ class TabDataParameter(ParameterWidget):
         self.view.setSizeAdjustPolicy(
             QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents
         )
-        self.layout().addWidget(self.view)
+        layout.addWidget(self.view)
 
         # Toolbar
         self.toolbar = QtWidgets.QToolBar()
@@ -307,7 +308,7 @@ class TabDataParameter(ParameterWidget):
             QtWidgets.QStyle.PixelMetric.PM_SmallIconSize
         )
         self.toolbar.setIconSize(QtCore.QSize(size, size))
-        self.layout().addWidget(self.toolbar)
+        layout.addWidget(self.toolbar)
 
         icon = MaterialIcon('add')
         action = QtGui.QAction(icon, 'Add Row', self)
@@ -350,10 +351,10 @@ class TabDataParameter(ParameterWidget):
         self._headers = headers
         self._refresh_horizontal_headers()
 
-    def types(self) -> tuple[type, ...]:
+    def types(self) -> tuple[type | None, ...]:
         return self._types
 
-    def set_types(self, types: Sequence[type]) -> None:
+    def set_types(self, types: Sequence[type | None]) -> None:
         if not isinstance(types, tuple):
             types = tuple(types)
         self._types = types
@@ -362,13 +363,13 @@ class TabDataParameter(ParameterWidget):
         # Fill up types to column count
         if not types:
             types = [None] * (self.model.columnCount() - len(types))
-        self.model.types = types
+        self.model.types = tuple(types)
 
         for i, type_ in enumerate(types):
-            if issubclass(type_, float):
+            if type_ is not None and issubclass(type_, float):
                 delegate = FloatDelegate(self.view)
                 delegate.decimals = self._decimals
-            elif issubclass(type_, int):
+            elif type_ is not None and issubclass(type_, int):
                 delegate = IntegerDelegate(self.view)
             else:
                 delegate = StyledItemDelegate(self.view)
@@ -382,19 +383,19 @@ class TabDataParameter(ParameterWidget):
         self._start_index = start_index
         self._refresh_vertical_headers()
 
-    def value(self) -> tuple:
+    def value(self) -> tuple[object, ...]:
         return super().value()
 
-    def set_value(self, value: Sequence) -> None:
+    def set_value(self, value: Sequence[object]) -> None:
         self.model.clear()
         if not value:
             return
 
-        for row, row_data in enumerate(value):
+        for _row, row_data in enumerate(value):
             items = []
             if isinstance(row_data, dict):
                 row_data = row_data.values()
-            for column, cell_data in enumerate(row_data):
+            for _column, cell_data in enumerate(row_data):
                 item = QtGui.QStandardItem()
                 item.setData(cell_data, QtCore.Qt.ItemDataRole.EditRole)
                 items.append(item)
@@ -413,9 +414,9 @@ class TabDataParameter(ParameterWidget):
             item = QtGui.QStandardItem()
             if i < len(self._types):
                 type_ = self._types[i]
-                if issubclass(type_, numbers.Number):
+                if type_ is not None and issubclass(type_, numbers.Number):
                     item.setData(0, QtCore.Qt.ItemDataRole.EditRole)
-                elif issubclass(type_, str):
+                elif type_ is not None and issubclass(type_, str):
                     item.setData('', QtCore.Qt.ItemDataRole.EditRole)
             items.append(item)
         self.model.insertRow(self.model.rowCount(), items)

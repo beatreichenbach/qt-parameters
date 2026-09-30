@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Collection, Mapping, Sequence
 from enum import Enum, EnumMeta, auto
 from functools import partial
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -51,18 +51,18 @@ class ParameterWidget(QtWidgets.QWidget):
 
     def _init_ui(self) -> None: ...
 
-    def value(self) -> Any:
+    def value(self) -> object:
         return self._value
 
-    def set_value(self, value: Any) -> None:
+    def set_value(self, value: object) -> None:
         if value != self._value:
             self._value = value
             self.value_changed.emit(value)
 
-    def default(self) -> Any:
+    def default(self) -> object:
         return self._default
 
-    def set_default(self, default: Any) -> None:
+    def set_default(self, default: object) -> None:
         self.set_value(default)
         self._default = self.value()
 
@@ -508,8 +508,8 @@ class PathParameter(ParameterWidget):
 
 
 class ComboParameter(ParameterWidget):
-    _value: Any = None
-    _default: Any = None
+    _value: object = None
+    _default: object = None
     _items: tuple = ()
 
     def _init_ui(self) -> None:
@@ -545,10 +545,10 @@ class ComboParameter(ParameterWidget):
         self.set_default(default)
         self.set_value(default)
 
-    def value(self) -> Any:
+    def value(self) -> objectobject:
         return super().value()
 
-    def set_value(self, value: Any) -> None:
+    def set_value(self, value: objectobject) -> None:
         index = self._index_from_value(value)
         value = self.combo.itemData(index)
         super().set_value(value)
@@ -560,7 +560,7 @@ class ComboParameter(ParameterWidget):
         value = self.combo.itemData(index)
         super().set_value(value)
 
-    def _index_from_value(self, value: Any) -> int:
+    def _index_from_value(self, value: object) -> int:
         """Return the index for a value, searching text and data."""
 
         if value is None:
@@ -630,7 +630,7 @@ class EnumParameter(ParameterWidget):
     def value(self) -> Enum | None:
         return super().value()
 
-    def set_value(self, value: Any) -> None:
+    def set_value(self, value: object) -> None:
         value = self._enum_from_value(value)
         super().set_value(value)
 
@@ -647,7 +647,7 @@ class EnumParameter(ParameterWidget):
         value = self._enum_from_value(value)
         super().set_value(value)
 
-    def _enum_from_value(self, value: Any) -> Enum | None:
+    def _enum_from_value(self, value: object) -> Enum | None:
         try:
             # value is Enum
             if isinstance(value, self._enum):
@@ -821,10 +821,12 @@ class MultiIntParameter(IntParameter):
             line.set_value(value)
             line.blockSignals(False)
 
-    def _cast_to_tuple(self, values: Any) -> tuple[int, ...]:
-        return values
+    def _cast_to_tuple(self, values: Sequence[int]) -> tuple[int, ...]:
+        if isinstance(values, tuple):
+            return values
+        return tuple(values)
 
-    def _cast_to_type(self, values: tuple[int, ...]) -> Any:
+    def _cast_to_type(self, values: tuple[int, ...]) -> object:
         return values
 
 
@@ -1054,9 +1056,9 @@ class ColorParameter(MultiFloatParameter):
     def _cast_to_type(self, values: tuple[float, ...]) -> QtGui.QColor:
         return QtGui.QColor.fromRgbF(*values[:3])
 
-    def _cast_to_tuple(self, value: QtGui.QColor) -> tuple[float, ...]:
-        rgba = value.getRgbF()
-        return rgba[:3]
+    def _cast_to_tuple(self, value: QtGui.QColor) -> tuple[float, float, float]:
+        rgba = cast(tuple[float, float, float, float], value.getRgbF())
+        return rgba[0], rgba[1], rgba[2]
 
     def _line_value_changed(self, value: float) -> None:
         super()._line_value_changed(value)

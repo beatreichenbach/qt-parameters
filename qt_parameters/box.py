@@ -27,16 +27,11 @@ class CollapsibleBox(QtWidgets.QFrame):
     ) -> None:
         super().__init__(parent)
 
-        self._maximum_height = self.maximumHeight()
         self._collapsed = False
         self._checkable = False
         self._collapsible = False
         self._style = CollapsibleBox.Style.SIMPLE
 
-        self.header = None
-        self.title_label = None
-        self.menu_button = None
-        self.frame = None
         self._init_ui()
 
         if title:
@@ -121,23 +116,22 @@ class CollapsibleBox(QtWidgets.QFrame):
 
     def eventFilter(self, watched: QtCore.QObject, event: QtCore.QEvent) -> bool:
         if watched == self.header and self._collapsible:
-            if event.type() == QtCore.QEvent.Type.MouseButtonPress:
-                event: QtCore.QEvent.Type.MouseButtonPress
-                if event.button() == QtCore.Qt.MouseButton.LeftButton:
-                    self.header.setAutoFillBackground(True)
+            if isinstance(event, QtGui.QMouseEvent):
+                if event.type() == QtCore.QEvent.Type.MouseButtonPress:
+                    if event.button() == QtCore.Qt.MouseButton.LeftButton:
+                        self.header.setAutoFillBackground(True)
 
-            if event.type() == QtCore.QEvent.Type.MouseButtonRelease:
-                event: QtCore.QEvent.Type.MouseButtonRelease
-                if event.button() == QtCore.Qt.MouseButton.LeftButton:
-                    self.set_collapsed(not self._collapsed)
-                    self.header.setAutoFillBackground(False)
+                if event.type() == QtCore.QEvent.Type.MouseButtonRelease:
+                    if event.button() == QtCore.Qt.MouseButton.LeftButton:
+                        self.set_collapsed(not self._collapsed)
+                        self.header.setAutoFillBackground(False)
         return super().eventFilter(watched, event)
 
     def leaveEvent(self, event: QtCore.QEvent) -> None:
         self.update()
         super().leaveEvent(event)
 
-    def layout(self) -> QtWidgets.QLayout:
+    def layout(self) -> QtWidgets.QLayout | None:
         return self.frame.layout()
 
     def setLayout(self, layout: QtWidgets.QLayout) -> None:
@@ -189,14 +183,6 @@ class CollapsibleBox(QtWidgets.QFrame):
             element = QtWidgets.QStyle.ControlElement.CE_TabBarTab
             style.drawControl(element, option, painter, self)
 
-    def setMaximumHeight(self, maxh: int) -> None:
-        self._maximum_height = maxh
-        super().setMaximumHeight(maxh)
-
-    def setMaximumSize(self, size: QtCore.QSize) -> None:
-        self._maximum_height = size.height()
-        super().setMaximumSize(size)
-
     def box_style(self) -> Style:
         return self._style
 
@@ -242,7 +228,8 @@ class CollapsibleBox(QtWidgets.QFrame):
             margins = self._default_margins
             self._expand_more_label.setVisible(False)
             self._expand_less_label.setVisible(False)
-        self.header.layout().setContentsMargins(margins)
+        if layout := self.header.layout():
+            layout.setContentsMargins(margins)
 
     def set_collapsed(self, collapsed: bool) -> None:
         if not self.collapsible():
@@ -254,7 +241,7 @@ class CollapsibleBox(QtWidgets.QFrame):
             self._expand_more_label.setVisible(True)
             self._expand_less_label.setVisible(False)
         else:
-            self.frame.setMaximumHeight(self._maximum_height)
+            self.frame.setMaximumHeight(self.maximumHeight())
             self._expand_more_label.setVisible(False)
             self._expand_less_label.setVisible(True)
 

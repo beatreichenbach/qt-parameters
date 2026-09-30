@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import math
-from numbers import Number
 from typing import Generic, TypeVar
 
 from qtpy import QtCore, QtGui, QtWidgets
@@ -12,79 +12,66 @@ from .qt_material_icons import MaterialIcon
 SUCCESS = 25
 
 
-N = TypeVar('N', bound=Number)
+N = TypeVar('N', int, float)
 
 
 class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
-    value_changed = QtCore.Signal(int)
+    value_changed = QtCore.Signal(object)
+
+    _validator: IntValidator | DoubleValidator
+    _value: N
+    _minimum: N
+    _maximum: N
+    _abs_minimum: N
+    _abs_maximum: N
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
         self._init_validator()
 
-        self._abs_minimum = self._validator.bottom()
-        self._abs_maximum = self._validator.top()
+        self._abs_minimum = self._coerce(self._validator.bottom())
+        self._abs_maximum = self._coerce(self._validator.top())
         self._minimum = self._abs_minimum
         self._maximum = self._abs_maximum
-        self._value = 0
+        self._value = self._coerce(0)
 
         self.commit_on_edit = False
 
         self.editingFinished.connect(self.commit)
         self.textEdited.connect(self._text_edit)
 
-    def _init_validator(self) -> None:
-        self._validator = IntValidator()
-        # NOTE: Using QLocale.c() fixes validation issues in non-English locales that
-        # use period thousand separators.
-        self._validator.setLocale(QtCore.QLocale.c())
-        self.setValidator(self._validator)
+    def _init_validator(self) -> None: ...
 
     def value(self) -> N:
         return self._value
 
+    def minimum(self) -> N:
+        return self._minimum
+
+    def maximum(self) -> N:
+        return self._maximum
+
     def set_value(self, value: N) -> None:
         text = self._validator.fixup(str(value))
-        state, text_, pos_ = self._validator.validate(text, 0)
+        state, _, _ = self._validator.validate(text, 0)  # ty: ignore[not-iterable]
         if state == QtGui.QValidator.State.Acceptable:
             self.setText(text)
             self.commit()
-
-    def minimum(self) -> N:
-        return self._minimum
 
     def set_minimum(self, minimum: N | None) -> None:
         if minimum is None:
             minimum = self._abs_minimum
         self._minimum = minimum
-        self._validator.setBottom(minimum)
-
-    def maximum(self) -> N:
-        return self._maximum
+        self._validator.setBottom(minimum)  # ty: ignore[invalid-argument-type]
 
     def set_maximum(self, maximum: N | None) -> None:
         if maximum is None:
             maximum = self._abs_maximum
         self._maximum = maximum
-        self._validator.setTop(maximum)
+        self._validator.setTop(maximum)  # ty: ignore[invalid-argument-type]
 
-    def commit(self, update_text: bool = True) -> None:
-        """Commit the current text."""
-
-        try:
-            value = int(self.text())
-        except ValueError:
-            value = 0
-
-        # Strip padding
-        if int(value) == value:
-            value = int(value)
-        if value != self._value:
-            self._value = value
-            self.value_changed.emit(value)
-        if update_text:
-            self.setText(str(value))
+    def commit(self, update_text: bool = True) -> None: ...
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         if event.key() == QtCore.Qt.Key.Key_Up:
@@ -114,6 +101,21 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
             self._step(add=False)
         event.accept()
 
+    def _coerce(self, value: int | float) -> N:
+        raise NotImplementedError
+
+    def _format_value(self, value: N, current_text: str, exponent: int) -> str:
+        raise NotImplementedError
+
+    def _step_exponent(self, step_index: int) -> int:
+        raise NotImplementedError
+
+    def _step_index(self, text: str, position: int) -> int:
+        raise NotImplementedError
+
+    def _relative_position(self, step_index: int, text: str) -> int:
+        raise NotImplementedError
+
     def _step(self, add: bool) -> bool:
         """Step up or down the text based on the current cursor position."""
 
@@ -133,12 +135,12 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
         # Perform a step up or down
         amount = 1 if add else -1
         step = amount * pow(10, exponent)
-        value = self._value + step
+        value = self._coerce(self._value + step)
 
         text = self._format_value(value, text, exponent)
 
         # Validate before setting new text
-        state, text_, pos_ = self.validator().validate(text, 0)
+        state, _, _ = self.validator().validate(text, 0)  # ty: ignore[not-iterable]
         if state != QtGui.QValidator.State.Acceptable:
             return False
         self.setText(text)
@@ -157,6 +159,40 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
 
         if self.commit_on_edit:
             self.commit(update_text=False)
+
+
+class IntLineEdit(NumberLineEdit[int]):
+    value_changed = QtCore.Signal(int)
+
+    _validator: IntValidator
+
+    def _init_validator(self) -> None:
+        validator = IntValidator()
+        # NOTE: Using QLocale.c() fixes validation issues in non-English locales that
+        # use period thousand separators.
+        validator.setLocale(QtCore.QLocale.c())
+        self._validator = validator
+        self.setValidator(validator)
+
+    def commit(self, update_text: bool = True) -> None:
+        """Commit the current text."""
+
+        try:
+            value = int(self.text())
+        except ValueError:
+            value = 0
+
+        # Strip padding
+        if int(value) == value:
+            value = int(value)
+        if value != self._value:
+            self._value = value
+            self.value_changed.emit(value)
+        if update_text:
+            self.setText(str(value))
+
+    def _coerce(self, value: int | float) -> int:
+        return int(value)
 
     def _format_value(self, value: int, current_text: str, exponent: int) -> str:
         """Return the text for a value, preserving the format of the current text."""
@@ -192,24 +228,30 @@ class NumberLineEdit(QtWidgets.QLineEdit, Generic[N]):
         return position
 
 
-class IntLineEdit(NumberLineEdit[int]):
-    value_changed = QtCore.Signal(int)
-
-
 class FloatLineEdit(NumberLineEdit[float]):
     value_changed = QtCore.Signal(float)
+
+    _validator: DoubleValidator
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
         self._decimals = self._validator.decimals()
 
     def _init_validator(self) -> None:
-        self._validator = DoubleValidator()
+        validator = DoubleValidator()
         # NOTE: Using QLocale.c() fixes validation issues in non-English locales that
         # use comma decimal separators.
-        self._validator.setLocale(QtCore.QLocale.c())
-        self._validator.setNotation(QtGui.QDoubleValidator.Notation.StandardNotation)
-        self.setValidator(self._validator)
+        validator.setLocale(QtCore.QLocale.c())
+        validator.setNotation(QtGui.QDoubleValidator.Notation.StandardNotation)
+        self._validator = validator
+        self.setValidator(validator)
+
+    def decimals(self) -> int:
+        return self._decimals
+
+    def set_decimals(self, value: int) -> None:
+        self._decimals = value
+        self._validator.setDecimals(value)
 
     def commit(self, update_text: bool = True) -> None:
         """Commit the current text."""
@@ -228,14 +270,10 @@ class FloatLineEdit(NumberLineEdit[float]):
                 value = int(value)
             self.setText(str(value))
 
-    def decimals(self) -> int:
-        return self._decimals
+    def _coerce(self, value: int | float) -> float:
+        return float(value)
 
-    def set_decimals(self, value: int) -> None:
-        self._decimals = value
-        self._validator.setDecimals(value)
-
-    def _format_value(self, value: int, current_text: str, exponent: int) -> str:
+    def _format_value(self, value: float, current_text: str, exponent: int) -> str:
         decimal_index = current_text.find('.')
 
         # Preserve padding
@@ -291,10 +329,8 @@ class IntValidator(QtGui.QIntValidator):
     def fixup(self, text: str) -> str:
         text = str(super().fixup(text))
         text = text.replace(',', '')
-        try:
+        with contextlib.suppress(ValueError):
             text = str(max(min(int(text), self.top()), self.bottom()))
-        except ValueError:
-            pass
         return text
 
 
@@ -317,7 +353,10 @@ class DoubleValidator(QtGui.QDoubleValidator):
 
 
 class NumberSlider(QtWidgets.QSlider, Generic[N]):
-    value_changed = QtCore.Signal(Number)
+    value_changed = QtCore.Signal(object)
+
+    _minimum: N
+    _maximum: N
 
     def __init__(
         self,
@@ -326,8 +365,8 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
     ) -> None:
         super().__init__(orientation, parent)
 
-        self._minimum = super().minimum()
-        self._maximum = super().maximum()
+        self._minimum = self._coerce(super().minimum())
+        self._maximum = self._coerce(super().maximum())
         self._step_factor = 2
 
         self.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBothSides)
@@ -335,10 +374,20 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
 
         self.valueChanged.connect(self._value_changed)
 
-    def value(self) -> N:
-        value = super().value()
-        real_value = self._real_value(value)
-        return real_value
+    def value(self) -> N:  # ty: ignore[invalid-method-override]
+        real_value = self._real_value(super().value())
+        if math.isnan(real_value):
+            return self._minimum
+        return self._coerce(real_value)
+
+    def minimum(self) -> N:  # ty: ignore[invalid-method-override]
+        return self._minimum
+
+    def maximum(self) -> N:  # ty: ignore[invalid-method-override]
+        return self._maximum
+
+    def step_factor(self) -> int:
+        return self._step_factor
 
     def set_value(self, value: N) -> None:
         if math.isnan(value):
@@ -346,26 +395,17 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
         slider_value = self._slider_value(value)
         self.setSliderPosition(slider_value)
 
-    def minimum(self) -> float:
-        return self._minimum
-
-    def set_minimum(self, minimum: float) -> None:
+    def set_minimum(self, minimum: N) -> None:
         value = self.value()
         self._minimum = minimum
         self._refresh_steps()
         self.set_value(value)
 
-    def maximum(self) -> float:
-        return self._maximum
-
-    def set_maximum(self, maximum: float) -> None:
+    def set_maximum(self, maximum: N) -> None:
         value = self.value()
         self._maximum = maximum
         self._refresh_steps()
         self.set_value(value)
-
-    def step_factor(self) -> int:
-        return self._step_factor
 
     def set_step_factor(self, factor: int) -> None:
         """
@@ -375,6 +415,9 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
 
         self._step_factor = factor
         self._refresh_steps()
+
+    def _coerce(self, value: int | float) -> N:
+        raise NotImplementedError
 
     def _slider_value(self, value: N) -> int:
         """Return the value for the slider from the 'real' value."""
@@ -387,7 +430,7 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
         clamped_value = min(max(percentage, 0), 1) * slider_range + super().minimum()
         return int(clamped_value)
 
-    def _real_value(self, value: int) -> N:
+    def _real_value(self, value: int) -> float:
         """Return the 'real' value from the slider value."""
 
         slider_range = super().maximum() - super().minimum()
@@ -395,8 +438,7 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
             percentage = (value - super().minimum()) / slider_range
         except ZeroDivisionError:
             return float('nan')
-        real_value = self._minimum + (self._maximum - self._minimum) * percentage
-        return real_value
+        return float(self._minimum + (self._maximum - self._minimum) * percentage)
 
     def _exponent(self) -> int:
         """Return the exponent based on the minimum and maximum."""
@@ -443,13 +485,16 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
     def _value_changed(self, value: int) -> None:
         """Emit a signal on value change with the real value."""
 
-        value = self._real_value(value)
-        if not math.isnan(value):
-            self.value_changed.emit(value)
+        real_value = self._real_value(value)
+        if not math.isnan(real_value):
+            self.value_changed.emit(self._coerce(real_value))
 
 
 class IntSlider(NumberSlider[int]):
     value_changed = QtCore.Signal(int)
+
+    def _coerce(self, value: int | float) -> int:
+        return int(value)
 
     def _slider_factor(self) -> float:
         factor = pow(10, -(self._exponent() - self._step_factor))
@@ -459,6 +504,9 @@ class IntSlider(NumberSlider[int]):
 
 class FloatSlider(NumberSlider[float]):
     value_changed = QtCore.Signal(float)
+
+    def _coerce(self, value: int | float) -> float:
+        return float(value)
 
 
 class RatioButton(QtWidgets.QPushButton):
@@ -520,19 +568,19 @@ class Label(QtWidgets.QWidget):
     def icon(self) -> QtGui.QIcon | None:
         return self._icon
 
+    def icon_size(self) -> QtCore.QSize:
+        return self._icon_size
+
+    def text(self) -> str:
+        return self._text_label.text()
+
     def set_icon(self, icon: QtGui.QIcon | None) -> None:
         self._icon = icon
         self._refresh_icon()
 
-    def icon_size(self) -> QtCore.QSize:
-        return self._icon_size
-
     def set_icon_size(self, icon_size: QtCore.QSize) -> None:
         self._icon_size = icon_size
         self._refresh_icon()
-
-    def text(self) -> str:
-        return self._text_label.text()
 
     def set_text(self, text: str) -> None:
         self._text_label.setText(text)

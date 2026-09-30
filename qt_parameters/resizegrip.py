@@ -22,18 +22,26 @@ class ResizeGrip(QtWidgets.QWidget):
     @property
     def min_size(self) -> QtCore.QSize:
         if self._min_size is None:
-            min_size = self.parent().minimumSize()
-            min_size_hint = self.parent().minimumSizeHint()
+            parent = self.parent()
+            if not isinstance(parent, QtWidgets.QWidget):
+                return QtCore.QSize()
+
+            min_size = parent.minimumSize()
+            min_size_hint = parent.minimumSizeHint()
             min_width = max(min_size.width(), min_size_hint.width(), self.width())
             min_height = max(min_size.height(), min_size_hint.height(), self.height())
             self._min_size = QtCore.QSize(min_width, min_height)
         return self._min_size
 
     def changeEvent(self, event: QtCore.QEvent) -> None:
-        if event.type() == QtCore.QEvent.Type.ParentChange and self.parent():
+        parent = self.parent()
+        if not isinstance(parent, QtWidgets.QWidget):
+            return
+
+        if event.type() == QtCore.QEvent.Type.ParentChange:
             self.reset()
 
-    def eventFilter(self, obj, event: QtCore.QEvent) -> bool:
+    def eventFilter(self, obj: QtCore.QObject, event: QtCore.QEvent) -> bool:
         if event.type() == QtCore.QEvent.Type.Resize and obj == self.parent():
             self.reposition()
             self.resize_scroll_bars()
@@ -57,26 +65,30 @@ class ResizeGrip(QtWidgets.QWidget):
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         super().mousePressEvent(event)
         self._resizing = True
-        self._start_size = self.parent().geometry().size()
         self._start_position = event.globalPos()
-        if self._start_size_policy is None:
-            self._start_size_policy = self.parent().sizePolicy()
-        if self._start_max_size is None:
-            self._start_max_size = self.parent().maximumSize()
+        parent = self.parent()
+        if isinstance(parent, QtWidgets.QWidget):
+            self._start_size = parent.geometry().size()
+            if self._start_size_policy is None:
+                self._start_size_policy = parent.sizePolicy()
+            if self._start_max_size is None:
+                self._start_max_size = parent.maximumSize()
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
         super().mouseMoveEvent(event)
         if self._resizing:
             delta = event.globalPos() - self._start_position
-            if self.can_resize_horizontal:
-                width = self._start_size.width() + delta.x()
-                width = max(width, self.min_size.width())
-                self.parent().setFixedWidth(width)
+            parent = self.parent()
+            if isinstance(parent, QtWidgets.QWidget):
+                if self.can_resize_horizontal:
+                    width = self._start_size.width() + delta.x()
+                    width = max(width, self.min_size.width())
+                    parent.setFixedWidth(width)
 
-            if self.can_resize_vertical:
-                height = self._start_size.height() + delta.y()
-                height = max(height, self.min_size.height())
-                self.parent().setFixedHeight(height)
+                if self.can_resize_vertical:
+                    height = self._start_size.height() + delta.y()
+                    height = max(height, self.min_size.height())
+                    parent.setFixedHeight(height)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
         super().mouseReleaseEvent(event)
@@ -85,35 +97,38 @@ class ResizeGrip(QtWidgets.QWidget):
     def reset(self) -> None:
         """Reset the Size, SizePolicy, MaximumSize and MinimumSize attributes."""
 
+        parent = self.parent()
+        if not isinstance(parent, QtWidgets.QWidget):
+            return
+
         # Size
-        size = (
-            self.parent()
-            .style()
-            .pixelMetric(QtWidgets.QStyle.PixelMetric.PM_SizeGripSize)
-        )
+        size = parent.style().pixelMetric(QtWidgets.QStyle.PixelMetric.PM_SizeGripSize)
         self.setFixedSize(size, size)
 
         # SizePolicy
         if self._start_size_policy is not None:
             policy = self._start_size_policy
             self._start_size_policy = None
-            self.parent().setSizePolicy(policy)
+            parent.setSizePolicy(policy)
 
         # MaximumSize
         if self._start_max_size is not None:
             max_size = self._start_max_size
             self._start_max_size = None
-            self.parent().setMaximumSize(max_size)
+            parent.setMaximumSize(max_size)
 
         # MinimumSize
-        self.parent().setMinimumSize(self.parent().minimumSizeHint())
+        parent.setMinimumSize(parent.minimumSizeHint())
         self._min_size = None
 
     def reposition(self) -> None:
         """Reposition the widget to the bottom right of the parent."""
 
+        parent = self.parent()
+        if not isinstance(parent, QtWidgets.QWidget):
+            return
         geometry = self.geometry()
-        geometry.moveBottomRight(self.parent().contentsRect().bottomRight())
+        geometry.moveBottomRight(parent.contentsRect().bottomRight())
         self.setGeometry(geometry)
 
     def resize_scroll_bars(self) -> None:
