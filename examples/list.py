@@ -12,7 +12,7 @@ from qt_parameters import (
     StringListParameter,
     StringParameter,
 )
-from tests import application
+from examples import application
 
 
 class ChildForm(ParameterForm):

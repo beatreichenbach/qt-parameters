@@ -4,7 +4,7 @@ import qt_themes
 from qtpy import QtWidgets
 
 from qt_parameters import FloatParameter, IntParameter, ParameterForm
-from tests import application
+from examples import application
 
 
 class WidgetGallery(QtWidgets.QWidget):

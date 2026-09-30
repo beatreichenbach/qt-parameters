@@ -48,7 +48,7 @@ print(editor.values())
 app.exec()
 ```
 
-For more examples see the `tests` directory.
+For more examples see the `examples` directory.
 
 ## Contributing
 

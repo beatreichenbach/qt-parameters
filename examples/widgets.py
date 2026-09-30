@@ -27,7 +27,7 @@ from qt_parameters import (
     StringParameter,
     TabDataParameter,
 )
-from tests import application
+from examples import application
 
 
 class WidgetGallery(QtWidgets.QWidget):

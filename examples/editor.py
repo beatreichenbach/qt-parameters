@@ -20,7 +20,7 @@ from qt_parameters import (
     SizeParameter,
     StringParameter,
 )
-from tests import application
+from examples import application
 
 
 class Editor(ParameterEditor):
