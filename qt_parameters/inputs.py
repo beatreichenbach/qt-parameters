@@ -5,7 +5,7 @@ import math
 from numbers import Number
 from typing import Generic, TypeVar
 
-from qt_material_icons import MaterialIcon
+from .qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
 
 SUCCESS = 25

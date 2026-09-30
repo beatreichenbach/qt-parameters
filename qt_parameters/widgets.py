@@ -5,7 +5,7 @@ from enum import Enum, EnumMeta, auto
 from functools import partial
 from typing import Any, Callable
 
-from qt_material_icons import MaterialIcon
+from .qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
 
 from . import utils

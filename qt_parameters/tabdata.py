@@ -4,7 +4,7 @@ import numbers
 import typing
 from collections.abc import Sequence
 
-from qt_material_icons import MaterialIcon
+from .qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
 
 from .resizegrip import ResizeGrip

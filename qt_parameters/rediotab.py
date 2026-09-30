@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from qt_material_icons import MaterialIcon
+from .qt_material_icons import MaterialIcon
 from qtpy import QtWidgets
 
 
