@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numbers
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -268,13 +268,13 @@ class DataTableView(QtWidgets.QTableView):
         self.context_menu.exec_(self.viewport().mapToGlobal(position))
 
 
-class TabDataParameter(ParameterWidget):
+class TabDataParameter(ParameterWidget[tuple[tuple[object, ...], ...]]):
     """Parameter to display tabular data in a QTreeWidget."""
 
     value_changed: QtCore.Signal = QtCore.Signal(tuple)
 
-    _value: tuple = ()
-    _default: tuple = ()
+    _value: tuple[tuple[object, ...], ...] = ()
+    _default: tuple[tuple[object, ...], ...] = ()
     _headers: tuple[str, ...] = ()
     _types: tuple[type | None, ...] = ()
     _start_index: int = 0
@@ -383,10 +383,18 @@ class TabDataParameter(ParameterWidget):
         self._start_index = start_index
         self._refresh_vertical_headers()
 
-    def value(self) -> tuple[object, ...]:
+    def value(self) -> tuple[tuple[object, ...], ...]:
         return super().value()
 
-    def set_value(self, value: Sequence[object]) -> None:
+    def set_default(
+        self, default: Sequence[Iterable[object] | Mapping[str, object]]
+    ) -> None:
+        self.set_value(default)
+        self._default = self.value()
+
+    def set_value(
+        self, value: Sequence[Iterable[object] | Mapping[str, object]]
+    ) -> None:
         self.model.clear()
         if not value:
             return
@@ -432,7 +440,7 @@ class TabDataParameter(ParameterWidget):
     def _item_change(self) -> None:
         super().set_value(self._tab_data_value())
 
-    def _tab_data_value(self) -> tuple:
+    def _tab_data_value(self) -> tuple[tuple[object, ...], ...]:
         """Return the data as nested tuples."""
 
         values = []

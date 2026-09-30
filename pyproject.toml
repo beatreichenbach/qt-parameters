@@ -54,3 +54,9 @@ ignore = ["SIM108", "SIM102"]
 [tool.pytest.ini_options]
 log_cli = true
 log_level = "INFO"
+
+[tool.ty.src]
+exclude = ["**/resources"]
+
+[tool.ruff]
+extend-exclude = ["**/resources"]

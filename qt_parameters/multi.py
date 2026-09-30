@@ -230,7 +230,7 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
                     item.setCheckState(QtCore.Qt.CheckState.Unchecked)
 
 
-class MultiComboParameter(ParameterWidget, Generic[T]):
+class MultiComboParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
     _default: tuple[T, ...] = ()
     _value: tuple[T, ...] = ()
     _items: dict[str, T]

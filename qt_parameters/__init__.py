@@ -1,4 +1,8 @@
 from .box import CollapsibleBox
+from .breadcrumbs import (
+    CrumbComboBox,
+    CrumbParameter,
+)
 from .editor import (
     ParameterEditor,
     ParameterForm,
@@ -12,6 +16,10 @@ from .list import (
 )
 from .multi import MultiComboParameter
 from .tabdata import TabDataParameter
+from .tokens import (
+    TokenComboBox,
+    TokenParameter,
+)
 from .widgets import (
     BoolParameter,
     ColorParameter,
@@ -21,6 +29,8 @@ from .widgets import (
     IntParameter,
     MultiFloatParameter,
     MultiIntParameter,
+    MultiParameterWidget,
+    NumberParameter,
     ParameterWidget,
     PathParameter,
     PointFParameter,
@@ -28,6 +38,7 @@ from .widgets import (
     SizeFParameter,
     SizeParameter,
     StringParameter,
+    TextParameter,
 )
 
 __all__ = [
@@ -35,6 +46,8 @@ __all__ = [
     'CollapsibleBox',
     'ColorParameter',
     'ComboParameter',
+    'CrumbComboBox',
+    'CrumbParameter',
     'EnumParameter',
     'FloatParameter',
     'IntParameter',
@@ -43,6 +56,8 @@ __all__ = [
     'MultiComboParameter',
     'MultiFloatParameter',
     'MultiIntParameter',
+    'MultiParameterWidget',
+    'NumberParameter',
     'ParameterEditor',
     'ParameterForm',
     'ParameterLabel',
@@ -56,6 +71,9 @@ __all__ = [
     'StringListParameter',
     'StringParameter',
     'TabDataParameter',
+    'TextParameter',
+    'TokenComboBox',
+    'TokenParameter',
 ]
 
 __version__ = '1.3.2'

@@ -9,7 +9,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 from .editor import ParameterForm
 from .qt_material_icons import MaterialIcon
-from .widgets import ParameterWidget, StringParameter
+from .widgets import ParameterWidget, TextParameter
 
 logger = logging.getLogger(__name__)
 
@@ -264,9 +264,9 @@ class DragWidget(QtWidgets.QWidget):
                     first = widget
 
 
-class ListParameter(ParameterWidget):
-    _value: tuple = ()
-    _default: tuple = ()
+class ListParameter(ParameterWidget[tuple[object, ...]]):
+    _value: tuple[object, ...] = ()
+    _default: tuple[object, ...] = ()
     _factory: type[ParameterWidget | ParameterForm] | Callable | None = None
 
     def _init_ui(self) -> None:
@@ -287,10 +287,10 @@ class ListParameter(ParameterWidget):
         self.drag.set_factory(factory)
         self.drag.clear()
 
-    def value(self) -> tuple:
+    def value(self) -> tuple[object, ...]:
         return super().value()
 
-    def set_value(self, value: Sequence) -> None:
+    def set_value(self, value: Sequence[object]) -> None:
         self.drag.clear()
         for v in value:
             item = self.drag.add_item()
@@ -298,13 +298,11 @@ class ListParameter(ParameterWidget):
             widget.blockSignals(True)
             if isinstance(widget, ParameterWidget):
                 widget.set_value(v)
-            elif isinstance(widget, ParameterForm):
+            elif isinstance(widget, ParameterForm) and isinstance(v, dict):
                 widget.set_values(v)
             widget.blockSignals(False)
 
-        if not isinstance(value, tuple):
-            value = tuple(value)
-        super().set_value(value)
+        super().set_value(tuple(value))
 
     def _item_added(self, item: DragItem) -> None:
         widget = item.widget()
@@ -317,7 +315,7 @@ class ListParameter(ParameterWidget):
         values = self._get_values()
         super().set_value(values)
 
-    def _get_values(self) -> tuple:
+    def _get_values(self) -> tuple[object, ...]:
         """Return the values of all items in the DragWidget as a tuple."""
 
         values = []
@@ -330,49 +328,39 @@ class ListParameter(ParameterWidget):
         return tuple(values)
 
 
-class StringListParameter(StringParameter):
+class StringListParameter(TextParameter[tuple[str, ...]]):
     _value: tuple[str, ...] = ()
     _default: tuple[str, ...] = ()
     _area: bool = True
 
-    def value(self) -> tuple[str, ...]:
-        return super().value()
-
     def set_value(self, value: Sequence[str]) -> None:
-        if not isinstance(value, tuple):
-            value = tuple(value)
-        ParameterWidget.set_value(self, value)
+        super().set_value(tuple(value))
 
-        self.text.blockSignals(True)
+    def _set_text(self, value: tuple[str, ...]) -> None:
         if isinstance(self.text, QtWidgets.QPlainTextEdit):
-            text = '\n'.join(value)
-            self.text.setPlainText(text)
+            self.text.setPlainText('\n'.join(value))
             self._refresh_height()
         elif isinstance(self.text, QtWidgets.QLineEdit):
-            text = ' '.join(value)
-            self.text.setText(text)
-        self.text.blockSignals(False)
+            self.text.setText(' '.join(value))
+
+    def _text_value(self) -> tuple[str, ...]:
+        if isinstance(self.text, QtWidgets.QPlainTextEdit):
+            values = self.text.toPlainText().split('\n')
+        elif isinstance(self.text, QtWidgets.QLineEdit):
+            values = self.text.text().split(' ')
+        else:
+            return ()
+        return tuple(v for v in values if v)
 
     def _action_triggered(self, action: QtGui.QAction) -> None:
         data = action.data()
         value = str(data)
-        if self._menu_mode == StringParameter.MenuMode.REPLACE:
+        if self._menu_mode == self.MenuMode.REPLACE:
             self.set_value((value,))
-        elif self._menu_mode == StringParameter.MenuMode.TOGGLE:
+        elif self._menu_mode == self.MenuMode.TOGGLE:
             values = self._value
             if value in values:
                 values = tuple(v for v in values if v != value)
             else:
                 values = (*values, value)
             self.set_value(values)
-
-    def _editing_finished(self) -> None:
-        if isinstance(self.text, QtWidgets.QPlainTextEdit):
-            values = self.text.toPlainText().split('\n')
-        elif isinstance(self.text, QtWidgets.QLineEdit):
-            values = self.text.text().split(' ')
-        else:
-            return
-
-        values = tuple(v for v in values if v)
-        ParameterWidget.set_value(self, values)
