@@ -1,13 +1,16 @@
 import logging
-from collections.abc import Collection, Mapping
-from typing import Any, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from PySide6 import QtCore
 from qtpy import QtGui, QtWidgets
 
-from qt_parameters import ParameterWidget
+from qt_parameters import ParameterWidget, utils
 
 logger = logging.getLogger(__name__)
+
+Item = tuple[str, Any]
+EXCLUSIVE_ROLE = QtCore.Qt.ItemDataRole.UserRole + 2
 
 
 class MultiComboBox(QtWidgets.QComboBox):
@@ -17,7 +20,9 @@ class MultiComboBox(QtWidgets.QComboBox):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self._max_display_items = 0
+        self._minimum_selection = 0
+        self._maximum_selection = 0
+        self._maximum_display_items = 3
 
         model = QtGui.QStandardItemModel(parent=self)
         self.setModel(model)
@@ -30,13 +35,13 @@ class MultiComboBox(QtWidgets.QComboBox):
         self.view().viewport().installEventFilter(self)
         self._pressed = False
 
-        self.currentIndexChanged.connect(self._index_changed)
+        # self.currentIndexChanged.connect(self.checked_changed)
 
     def initStyleOption(self, option: QtWidgets.QStyleOptionComboBox) -> None:
         super().initStyleOption(option)
         option.currentText = self._display_text()
 
-    def eventFilter(self, watched: QtCore.QObject, event: QtGui.QEvent) -> bool:
+    def eventFilter(self, watched: QtCore.QObject, event: QtCore.QEvent) -> bool:
         # NOTE: Override events that would call QComboBox.hidePopup().
         if watched is self.view().viewport():
             if event.type() == QtCore.QEvent.Type.MouseButtonPress:
@@ -48,28 +53,36 @@ class MultiComboBox(QtWidgets.QComboBox):
                     return True
 
         if event.type() == QtCore.QEvent.Type.ShortcutOverride:
-            if event.key() in (
+            select_keys = (
                 QtCore.Qt.Key.Key_Select,
                 QtCore.Qt.Key.Key_Enter,
                 QtCore.Qt.Key.Key_Return,
-            ):
+            )
+            if isinstance(event, QtGui.QKeyEvent) and event.key() in select_keys:
                 self._toggle_selected()
                 return True
         return super().eventFilter(watched, event)
 
-    def max_display_items(self) -> int:
-        return self._max_display_items
+    def maximum_display_items(self) -> int:
+        return self._maximum_display_items
 
-    def set_max_display_items(self, max_display_items: int) -> None:
-        """
-        Set the maximum of items displayed in the text.
-        If `max_display_items` is 0, there is no limit.
-        """
-
-        self._max_display_items = max_display_items
+    def set_maximum_display_items(self, maximum_display_items: int) -> None:
+        self._maximum_display_items = maximum_display_items
         self.update()
 
-    def items(self) -> tuple[str, Any]:
+    def minimum_selection(self) -> int:
+        return self._minimum_selection
+
+    def set_minimum_selection(self, minimum_selection: int) -> None:
+        self._minimum_selection = minimum_selection
+
+    def maximum_selection(self) -> int:
+        return self._maximum_selection
+
+    def set_maximum_selection(self, maximum_selection: int) -> None:
+        self._maximum_selection = maximum_selection
+
+    def items(self) -> tuple[Item, ...]:
         items = []
         model = self.model()
         if isinstance(model, QtGui.QStandardItemModel):
@@ -79,48 +92,60 @@ class MultiComboBox(QtWidgets.QComboBox):
                 items.append(item)
         return tuple(items)
 
-    def set_items(self, items: tuple[str, Any]) -> None:
+    def set_items(
+        self, items: Sequence[Item] = (), exclusive_items: Sequence[Item] = ()
+    ) -> None:
         model = self.model()
-        if isinstance(model, QtGui.QStandardItemModel):
-            model.clear()
+        if not isinstance(model, QtGui.QStandardItemModel):
+            return
+
+        model.clear()
+        if exclusive_items:
+            for label, data in exclusive_items:
+                item = QtGui.QStandardItem()
+                item.setText(label)
+                item.setData(data)
+                item.setData(True, EXCLUSIVE_ROLE)
+                item.setCheckable(True)
+                model.appendRow(item)
+
+        if items and exclusive_items:
+            separator = QtGui.QStandardItem()
+            separator.setData(
+                'separator', QtCore.Qt.ItemDataRole.AccessibleDescriptionRole
+            )
+            model.appendRow(separator)
+
+        if items:
             for label, data in items:
                 item = QtGui.QStandardItem()
                 item.setText(label)
                 item.setData(data)
                 item.setCheckable(True)
                 model.appendRow(item)
-        self.setCurrentIndex(-1)
 
-    def checked_items(self) -> tuple:
+        self._index_changed()
+
+    def checked_values(self) -> tuple[Any, ...]:
         items = self._checked_items()
         values = [item.data() for item in items]
         return tuple(values)
 
-    def set_checked_items(self, values: Sequence) -> None:
+    def set_checked_values(self, values: Sequence) -> None:
         model = self.model()
-        if isinstance(model, QtGui.QStandardItemModel):
+        if not isinstance(model, QtGui.QStandardItemModel):
+            return
+
+        # self._clear()
+        for value in values:
+            # NOTE: Possibly unhashable item.data(), so nested linear search
             for row in range(model.rowCount()):
                 item = model.item(row, 0)
-                item.setCheckState(QtCore.Qt.CheckState.Unchecked)
-                if item.data() in values:
+                if item.data() == value:
+                    self._clear(exclusive_only=not bool(item.data(EXCLUSIVE_ROLE)))
                     item.setCheckState(QtCore.Qt.CheckState.Checked)
-            self._index_changed()
-
-    def _display_text(self) -> str:
-        items = self._checked_items()
-
-        if self._max_display_items > 0:
-            filtered_items = items[: self._max_display_items]
-        else:
-            filtered_items = items
-
-        texts = [item.text() for item in filtered_items]
-        if len(texts) < len(items):
-            texts.append('...')
-
-        display_text = self.delimiter.join(texts)
-
-        return display_text
+                    break
+        self._index_changed()
 
     def _checked_items(self) -> tuple[QtGui.QStandardItem, ...]:
         items = []
@@ -132,32 +157,80 @@ class MultiComboBox(QtWidgets.QComboBox):
                     items.append(item)
         return tuple(items)
 
+    def _display_text(self) -> str:
+        items = self._checked_items()
+        max_items = self._maximum_display_items
+        limited_items = items[:max_items] if max_items > 0 else items
+
+        texts = [item.text() for item in limited_items]
+        if len(texts) < len(items):
+            texts.append('...')
+
+        display_text = self.delimiter.join(texts)
+
+        return display_text
+
     def _toggle_selected(self) -> None:
         model = self.model()
-        if isinstance(model, QtGui.QStandardItemModel):
-            indexes = self.view().selectedIndexes()
-            for index in indexes:
-                item = model.itemFromIndex(index)
-                if item.checkState() == QtCore.Qt.CheckState.Checked:
+        if not isinstance(model, QtGui.QStandardItemModel):
+            return
+
+        count = len(self._checked_items())
+        indexes = self.view().selectedIndexes()
+        for index in indexes:
+            item = model.itemFromIndex(index)
+            if item.checkState() == QtCore.Qt.CheckState.Checked:
+                if count > self._minimum_selection:
                     item.setCheckState(QtCore.Qt.CheckState.Unchecked)
-                else:
+                    count -= 1
+            else:
+                self._clear(exclusive_only=not bool(item.data(EXCLUSIVE_ROLE)))
+
+                if self._maximum_selection == 0 or count < self._maximum_selection:
                     item.setCheckState(QtCore.Qt.CheckState.Checked)
-            self._index_changed()
+                    count += 1
+
+        self._index_changed()
 
     def _index_changed(self) -> None:
+        """Update the text and emit a checked_changed signal."""
+
+        # Store the selected index in the drop-down
+        indexes = self.view().selectedIndexes()
+        current_index = next(iter(indexes), QtCore.QModelIndex())
+
+        # Update the combo box signal to set the text.
+        self.blockSignals(True)
         if not self._checked_items():
             self.setCurrentIndex(-1)
         else:
             self.setCurrentIndex(0)
+        self.blockSignals(False)
         self.update()
+
+        # Restore the current index in the view
+        self.view().selectionModel().setCurrentIndex(
+            current_index, QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
+        )
+
         self.checked_changed.emit()
+
+    def _clear(self, exclusive_only: bool = False) -> None:
+        """Clear the check status on all items."""
+
+        model = self.model()
+        if isinstance(model, QtGui.QStandardItemModel):
+            for row in range(model.rowCount()):
+                item = model.item(row, 0)
+                if not exclusive_only or item.data(EXCLUSIVE_ROLE):
+                    item.setCheckState(QtCore.Qt.CheckState.Unchecked)
 
 
 class MultiComboParameter(ParameterWidget):
-    _items: tuple[str, Any] = ()
-    _placeholder: str = ''
     _default: tuple = ()
     _value: tuple = ()
+    _items: tuple[Item, ...] = ()
+    _exclusive_items: tuple[Item, ...] = ()
 
     def __init__(self, name: str = '', parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(name, parent)
@@ -177,43 +250,73 @@ class MultiComboParameter(ParameterWidget):
     def items(self) -> tuple:
         return self._items
 
-    def set_items(self, items: Collection) -> None:
+    def set_items(
+        self, items: Sequence[str] | Sequence[tuple[str, Any]] | Mapping[str, Any]
+    ) -> None:
         """
         Set the items of the parameter.
-        `items` is either a sequence or dictionary with format (label, data).
+
+        `items` is either in the format of label, or (label, data).
         """
 
-        if isinstance(items, Mapping):
-            items = tuple(items.items())
-        else:
-            items = tuple(i if isinstance(i, tuple) else (i, i) for i in items)
-
-        self._items = items
+        self._items = utils.items(items)
         self._refresh_items()
         self.reset()
 
+    def exclusive_items(self) -> tuple:
+        return self._exclusive_items
+
+    def set_exclusive_items(
+        self, items: Sequence[str] | Sequence[tuple[str, Any]] | Mapping[str, Any]
+    ) -> None:
+        """
+        Set the exclusive items of the parameter. Exclusive items automatically clear
+        other items and only allow one of them to be selected at any time.
+
+        `items` is either in the format of label, or (label, data).
+        """
+
+        self._exclusive_items = utils.items(items)
+        self._refresh_items()
+        self.reset()
+
+    def minimum_selection(self) -> int:
+        return self.combo.minimum_selection()
+
+    def set_minimum_selection(self, minimum_selection: int) -> None:
+        self.combo.set_minimum_selection(minimum_selection)
+
+    def maximum_selection(self) -> int:
+        return self.combo.maximum_selection()
+
+    def set_maximum_selection(self, maximum_selection: int) -> None:
+        self.combo.set_maximum_selection(maximum_selection)
+
     def placeholder(self) -> str:
-        return self._placeholder
+        return self.combo.placeholderText()
 
     def set_placeholder(self, placeholder: str) -> None:
-        self._placeholder = placeholder
-        self.combo.setPlaceholderText(self._placeholder)
+        self.combo.setPlaceholderText(placeholder)
 
     def value(self) -> tuple:
         return super().value()
 
     def set_value(self, value: Sequence) -> None:
         self.combo.blockSignals(True)
-        self.combo.set_checked_items(value)
+        self.combo.set_checked_values(value)
         self.combo.blockSignals(False)
-        value = self.combo.checked_items()
+        value = self.combo.checked_values()
         super().set_value(value)
 
+    def clear(self) -> None:
+        self.set_exclusive_items(())
+        self.set_items(())
+
     def _checked_changed(self) -> None:
-        value = self.combo.checked_items()
+        value = self.combo.checked_values()
         super().set_value(value)
 
     def _refresh_items(self) -> None:
         self.combo.blockSignals(True)
-        self.combo.set_items(self._items)
+        self.combo.set_items(self._items, self._exclusive_items)
         self.combo.blockSignals(False)

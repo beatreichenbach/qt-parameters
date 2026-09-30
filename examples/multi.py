@@ -2,10 +2,9 @@ import logging
 
 from qtpy import QtWidgets
 
+from examples import application
 from qt_parameters import ParameterForm
 from qt_parameters.multi import MultiComboParameter
-
-from examples import application
 
 
 class WidgetGallery(QtWidgets.QWidget):
@@ -25,10 +24,11 @@ class WidgetGallery(QtWidgets.QWidget):
         layout.addWidget(form)
 
         parm = MultiComboParameter('multi')
-        items = ('alice', 'bob', 'charlie')
-        parm.set_items(items)
+        parm.set_items(('alice', 'bob', 'charlie'))
+        parm.set_exclusive_items(('all', 'none'))
         parm.set_placeholder('Select Options ...')
-        parm.set_value(('alice', 'bob'))
+        parm.set_value(('alice', 'bob', 'none'))
+        parm.combo.set_maximum_selection(2)
         parm.value_changed.connect(logging.debug)
         form.add_parameter(parm)
 
