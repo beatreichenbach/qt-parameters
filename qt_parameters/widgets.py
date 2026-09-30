@@ -5,7 +5,6 @@ from enum import Enum, EnumMeta, auto
 from functools import partial
 from typing import Any, Callable
 
-from .qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
 
 from . import utils
@@ -17,6 +16,7 @@ from .inputs import (
     RatioButton,
     TextEdit,
 )
+from .qt_material_icons import MaterialIcon
 from .resizegrip import ResizeGrip
 
 MIN_SLIDER_WIDTH = 200
@@ -256,19 +256,19 @@ class FloatParameter(IntParameter):
         return super().slider_min()
 
     def set_slider_min(self, slider_min: float) -> None:
-        super().set_slider_min(slider_min)  # noqa
+        super().set_slider_min(slider_min)
 
     def slider_max(self) -> float:
         return super().slider_max()
 
     def set_slider_max(self, slider_max: float) -> None:
-        super().set_slider_max(slider_max)  # noqa
+        super().set_slider_max(slider_max)
 
     def value(self) -> float:
         return super().value()
 
     def set_value(self, value: float) -> None:
-        super().set_value(value)  # noqa
+        super().set_value(value)
 
 
 class StringParameter(ParameterWidget):
@@ -879,25 +879,25 @@ class MultiFloatParameter(MultiIntParameter):
         return super().line_min()
 
     def set_line_min(self, line_min: float) -> None:
-        super().set_line_min(line_min)  # noqa
+        super().set_line_min(line_min)
 
     def line_max(self) -> float:
         return super().line_max()
 
     def set_line_max(self, line_max: float) -> None:
-        super().set_line_max(line_max)  # noqa
+        super().set_line_max(line_max)
 
     def slider_min(self) -> float:
         return super().slider_min()
 
     def set_slider_min(self, slider_min: float) -> None:
-        super().set_slider_min(slider_min)  # noqa
+        super().set_slider_min(slider_min)
 
     def slider_max(self) -> float:
         return super().slider_max()
 
     def set_slider_max(self, slider_max: float) -> None:
-        super().set_slider_max(slider_max)  # noqa
+        super().set_slider_max(slider_max)
 
     def value(self) -> tuple[float, ...]:
         return super().value()
@@ -923,7 +923,7 @@ class PointParameter(MultiIntParameter):
         super().set_value(value)
 
     def value(self) -> QtCore.QPoint:
-        return super().value()  # noqa
+        return super().value()
 
     def _cast_to_type(self, values: tuple[int, ...]) -> QtCore.QPoint:
         return QtCore.QPoint(*values[:2])
@@ -946,10 +946,10 @@ class PointFParameter(MultiFloatParameter):
         self.set_ratio_visible(self._ratio_visible)
 
     def set_value(self, value: QtCore.QPointF | Sequence) -> None:
-        super().set_value(value)  # noqa
+        super().set_value(value)
 
     def value(self) -> QtCore.QPointF:
-        return super().value()  # noqa
+        return super().value()
 
     def _cast_to_type(self, values: tuple[float, ...]) -> QtCore.QPointF:
         return QtCore.QPointF(*values[:2])
@@ -968,7 +968,7 @@ class SizeParameter(MultiIntParameter):
         super().set_value(value)
 
     def value(self) -> QtCore.QSize:
-        return super().value()  # noqa
+        return super().value()
 
     def _cast_to_type(self, values: tuple[int, ...]) -> QtCore.QSize:
         return QtCore.QSize(*values[:2])
@@ -984,10 +984,10 @@ class SizeFParameter(MultiFloatParameter):
     _default: QtCore.QSizeF = QtCore.QSizeF(0, 0)
 
     def set_value(self, value: QtCore.QSizeF | Sequence) -> None:
-        super().set_value(value)  # noqa
+        super().set_value(value)
 
     def value(self) -> QtCore.QSizeF:
-        return super().value()  # noqa
+        return super().value()
 
     def _cast_to_type(self, values: tuple[float, ...]) -> QtCore.QSizeF:
         return QtCore.QSizeF(*values[:2])
@@ -1025,7 +1025,7 @@ class ColorParameter(MultiFloatParameter):
     def set_color_min(self, color_min: float) -> None:
         self._color_min = color_min
         for line in self.lines:
-            line.set_minimum(self._color_min)  # noqa
+            line.set_minimum(self._color_min)
 
     def color_max(self) -> float:
         return self._color_max
@@ -1033,32 +1033,33 @@ class ColorParameter(MultiFloatParameter):
     def set_color_max(self, color_max: float) -> None:
         self._color_max = color_max
         for line in self.lines:
-            line.set_maximum(self._color_max)  # noqa
+            line.set_maximum(self._color_max)
 
     def select_color(self) -> None:
         options = QtWidgets.QColorDialog.ColorDialogOption.DontUseNativeDialog
         color = QtWidgets.QColorDialog.getColor(initial=self._value, options=options)
         if color.isValid():
-            super().set_value(color)  # noqa
+            super().set_value(color)
             values = self._cast_to_tuple(color)
-            self._set_line_values(values)  # noqa
+            self._set_line_values(values)
             self._set_button_value(color)
 
     def value(self) -> QtGui.QColor:
-        return super().value()  # noqa
+        return super().value()
 
     def set_value(self, value: QtGui.QColor | Sequence) -> None:
-        super().set_value(value)  # noqa
+        super().set_value(value)
         self._set_button_value(self._value)
 
     def _cast_to_type(self, values: tuple[float, ...]) -> QtGui.QColor:
         return QtGui.QColor.fromRgbF(*values[:3])
 
     def _cast_to_tuple(self, value: QtGui.QColor) -> tuple[float, ...]:
-        return value.getRgbF()[:3]
+        rgba = value.getRgbF()
+        return rgba[:3]
 
     def _line_value_changed(self, value: float) -> None:
-        super()._line_value_changed(value)  # noqa
+        super()._line_value_changed(value)
         self._set_button_value(self._value)
 
     def _set_button_value(self, value: QtGui.QColor) -> None:

@@ -5,10 +5,10 @@ from collections.abc import Sequence
 from functools import partial
 from typing import Callable
 
-from .qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
 
 from .editor import ParameterForm
+from .qt_material_icons import MaterialIcon
 from .widgets import ParameterWidget, StringParameter
 
 logger = logging.getLogger(__name__)

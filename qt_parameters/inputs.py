@@ -5,8 +5,9 @@ import math
 from numbers import Number
 from typing import Generic, TypeVar
 
-from .qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
+
+from .qt_material_icons import MaterialIcon
 
 SUCCESS = 25
 
@@ -345,7 +346,6 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
         slider_value = self._slider_value(value)
         self.setSliderPosition(slider_value)
 
-
     def minimum(self) -> float:
         return self._minimum
 
@@ -398,7 +398,6 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
         real_value = self._minimum + (self._maximum - self._minimum) * percentage
         return real_value
 
-
     def _exponent(self) -> int:
         """Return the exponent based on the minimum and maximum."""
 
@@ -413,7 +412,6 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
         else:
             exponent = math.floor(exponent)
         return exponent
-
 
     def _refresh_steps(self) -> None:
         """Refresh the slider ticks and steps based on the minimum and maximum."""
@@ -449,6 +447,7 @@ class NumberSlider(QtWidgets.QSlider, Generic[N]):
         if not math.isnan(value):
             self.value_changed.emit(value)
 
+
 class IntSlider(NumberSlider[int]):
     value_changed = QtCore.Signal(int)
 
@@ -456,6 +455,7 @@ class IntSlider(NumberSlider[int]):
         factor = pow(10, -(self._exponent() - self._step_factor))
         factor = min(1, factor)
         return factor
+
 
 class FloatSlider(NumberSlider[float]):
     value_changed = QtCore.Signal(float)
@@ -568,6 +568,8 @@ class Label(QtWidgets.QWidget):
 
     @staticmethod
     def _color(name: str) -> QtGui.QColor | None:
+        """Return the color from optional `qt-themes` package, otherwise None."""
+
         try:
             import qt_themes
         except ImportError:

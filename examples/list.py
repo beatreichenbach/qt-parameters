@@ -1,9 +1,9 @@
 import json
 import logging
 
-import qt_themes
 from qtpy import QtWidgets
 
+from examples import application
 from qt_parameters import (
     BoolParameter,
     IntParameter,
@@ -12,7 +12,6 @@ from qt_parameters import (
     StringListParameter,
     StringParameter,
 )
-from examples import application
 
 
 class ChildForm(ParameterForm):

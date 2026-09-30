@@ -2,11 +2,11 @@ import json
 import logging
 import os
 from enum import Enum
-from functools import partial
 
 import qt_themes
-from qtpy import QtGui, QtCore, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
+from examples import application
 from qt_parameters import (
     BoolParameter,
     CollapsibleBox,
@@ -27,7 +27,8 @@ from qt_parameters import (
     StringParameter,
     TabDataParameter,
 )
-from examples import application
+
+Vehicle = Enum('Vehicle', 'Bicycle Car Plane')
 
 
 class WidgetGallery(QtWidgets.QWidget):
@@ -63,7 +64,7 @@ class WidgetGallery(QtWidgets.QWidget):
         box = parameter_form.add_form(form)
 
         action = QtGui.QAction('Reset', form)
-        action.triggered.connect(partial(form.reset, None))
+        action.triggered.connect(form.reset)
         box.addAction(action)
 
         parm = IntParameter('int')
@@ -183,8 +184,7 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_parameter(parm)
 
         parm = EnumParameter('enum')
-        enum = Enum('Vehicle', 'Bicycle Car Plane')
-        parm.set_enum(enum)
+        parm.set_enum(Vehicle)
         form.add_parameter(parm)
 
         parm = BoolParameter('bool')
@@ -242,7 +242,8 @@ class WidgetGallery(QtWidgets.QWidget):
 
         parm = SizeParameter('sizef')
         form.add_parameter(parm, checkable=True)
-        form.checkbox(parm).set_value(True)
+        if checkbox := form.checkbox(parm):
+            checkbox.set_value(True)
 
         # TabData
         form = ParameterForm('tabdata')
@@ -289,7 +290,7 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_widget(label)
 
     def _screenshot(self) -> None:
-        path = os.path.join('..', '.github', 'assets', f'editor.png')
+        path = os.path.join('..', '.github', 'assets', 'editor.png')
         pixmap = self.grab()
         pixmap.save(path)
 

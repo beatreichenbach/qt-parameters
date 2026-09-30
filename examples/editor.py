@@ -1,9 +1,9 @@
 import json
 import logging
 
-import qt_themes
 from qtpy import QtCore, QtGui, QtWidgets
 
+from examples import application
 from qt_parameters import (
     BoolParameter,
     ColorParameter,
@@ -20,7 +20,6 @@ from qt_parameters import (
     SizeParameter,
     StringParameter,
 )
-from examples import application
 
 
 class Editor(ParameterEditor):
@@ -58,7 +57,7 @@ class Editor(ParameterEditor):
             parm = StringParameter('string')
             form.add_parameter(parm)
         except ValueError:
-            logging.info(f'Unique names validated successfully.')
+            logging.info('Unique names validated successfully.')
             self.remove_form(form)
             self.remove_widget(box)
 

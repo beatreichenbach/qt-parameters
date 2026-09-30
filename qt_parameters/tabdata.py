@@ -4,9 +4,9 @@ import numbers
 import typing
 from collections.abc import Sequence
 
-from .qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
 
+from .qt_material_icons import MaterialIcon
 from .resizegrip import ResizeGrip
 from .widgets import FloatParameter, IntParameter, ParameterWidget
 
@@ -188,19 +188,19 @@ class DataTableView(QtWidgets.QTableView):
         self.customContextMenuRequested.connect(self.show_menu)
         self.context_menu = QtWidgets.QMenu(self)
 
-        action = QtGui.QAction("Edit", self)
+        action = QtGui.QAction('Edit', self)
         action.triggered.connect(self.edit_selected)
         self.addAction(action)
         self.context_menu.addAction(action)
 
-        action = QtGui.QAction("Copy", self)
+        action = QtGui.QAction('Copy', self)
         action.setShortcut(QtGui.QKeySequence.StandardKey.Copy)
         action.setShortcutContext(QtCore.Qt.ShortcutContext.WidgetShortcut)
         action.triggered.connect(self.copy_selected)
         self.addAction(action)
         self.context_menu.addAction(action)
 
-        action = QtGui.QAction("Paste", self)
+        action = QtGui.QAction('Paste', self)
         action.setShortcut(QtGui.QKeySequence.StandardKey.Paste)
         action.setShortcutContext(QtCore.Qt.ShortcutContext.WidgetShortcut)
         action.triggered.connect(self.paste_selected)
@@ -238,7 +238,7 @@ class DataTableView(QtWidgets.QTableView):
     def paste_selected(self) -> None:
         selected_indexes = self.selectedIndexes()
         current_index = self.currentIndex()
-        if not current_index and not selected_indexes or not self.model():
+        if (not current_index and not selected_indexes) or not self.model():
             return
 
         # Get top left index

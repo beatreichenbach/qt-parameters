@@ -1,10 +1,9 @@
 import logging
 
-import qt_themes
 from qtpy import QtWidgets
 
-from qt_parameters import FloatParameter, IntParameter, ParameterForm
 from examples import application
+from qt_parameters import FloatParameter, IntParameter, ParameterForm
 
 
 class WidgetGallery(QtWidgets.QWidget):
@@ -128,7 +127,6 @@ class WidgetGallery(QtWidgets.QWidget):
         parm.set_default(0.0001)
         form.add_parameter(parm)
 
-
         # Float Step Sizes
         form = ParameterForm('float_step_sizes')
         parameter_form.add_form(form)
@@ -152,6 +150,7 @@ class WidgetGallery(QtWidgets.QWidget):
         parm.set_default(100)
         parm.set_step_factor(4)
         form.add_parameter(parm)
+
 
 def main() -> None:
     logging.basicConfig(level=logging.DEBUG, force=True)

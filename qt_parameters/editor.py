@@ -9,7 +9,7 @@ from . import utils
 from .box import CollapsibleBox
 from .rediotab import RadioTabWidget
 from .scrollarea import VerticalScrollArea
-from .widgets import ParameterWidget, BoolParameter
+from .widgets import BoolParameter, ParameterWidget
 
 
 class Separator(QtWidgets.QWidget):
@@ -85,7 +85,7 @@ class ParameterLabel(QtWidgets.QLabel):
         self._widget = widget
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({repr(self.text())})'
+        return f'{self.__class__.__name__}({self.text()!r})'
 
     def enterEvent(self, event: QtGui.QEnterEvent) -> None:
         if self._widget.tooltip():
@@ -243,7 +243,6 @@ class ParameterForm(QtWidgets.QWidget):
                 if form := self.form(name.replace('_enabled', '')):
                     defaults[name] = widget.currentWidget() == form
         return defaults
-
 
     def set_defaults(self, values: dict) -> None:
         """Set the default values of ParameterWidgets in the form."""
@@ -556,11 +555,11 @@ class ParameterForm(QtWidgets.QWidget):
                     widgets.update(widget.widgets())
                 else:
                     widgets[name] = widget
-            elif isinstance(widget, ParameterWidget):
-                widgets[name] = widget
-            elif isinstance(widget, CollapsibleBox):
-                widgets[name] = widget
-            elif isinstance(widget, RadioTabWidget):
+            elif (
+                isinstance(widget, ParameterWidget)
+                or isinstance(widget, CollapsibleBox)
+                or isinstance(widget, RadioTabWidget)
+            ):
                 widgets[name] = widget
         return widgets
 
@@ -637,7 +636,7 @@ class ParameterForm(QtWidgets.QWidget):
         :raises ValueError: If the name is not valid.
         """
         if not name:
-            raise ValueError(f'name cannot be empty')
+            raise ValueError('name cannot be empty')
 
         if self._root._unique_names:
             names = self._root._names()

@@ -4,10 +4,9 @@ import logging
 from collections.abc import Mapping, Sequence
 from typing import Any, Generic, TypeVar
 
-from PySide6 import QtCore
-from qtpy import QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
-from qt_parameters import ParameterWidget
+from .widgets import ParameterWidget
 
 logger = logging.getLogger(__name__)
 

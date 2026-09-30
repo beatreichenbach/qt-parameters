@@ -49,6 +49,7 @@ quote-style = "single"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "UP", "B", "SIM", "ANN", "RUF"]
+ignore = ["SIM108", "SIM102"]
 
 [tool.pytest.ini_options]
 log_cli = true

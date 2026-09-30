@@ -3,8 +3,9 @@ from __future__ import annotations
 import enum
 from collections.abc import Sequence
 
-from .qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
+
+from .qt_material_icons import MaterialIcon
 
 PixelMetric = QtWidgets.QStyle.PixelMetric
 
