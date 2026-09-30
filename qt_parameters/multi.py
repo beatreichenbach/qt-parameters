@@ -1,19 +1,22 @@
+from __future__ import annotations
+
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from PySide6 import QtCore
 from qtpy import QtGui, QtWidgets
 
-from qt_parameters import ParameterWidget, utils
+from qt_parameters import ParameterWidget
 
 logger = logging.getLogger(__name__)
 
-Item = tuple[str, Any]
+T = TypeVar('T')
+Item = tuple[str, T]
 EXCLUSIVE_ROLE = QtCore.Qt.ItemDataRole.UserRole + 2
 
 
-class MultiComboBox(QtWidgets.QComboBox):
+class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
     checked_changed = QtCore.Signal()
     delimiter: str = ', '
 
@@ -82,7 +85,7 @@ class MultiComboBox(QtWidgets.QComboBox):
     def set_maximum_selection(self, maximum_selection: int) -> None:
         self._maximum_selection = maximum_selection
 
-    def items(self) -> tuple[Item, ...]:
+    def items(self) -> tuple[Item[T], ...]:
         items = []
         model = self.model()
         if isinstance(model, QtGui.QStandardItemModel):
@@ -93,7 +96,9 @@ class MultiComboBox(QtWidgets.QComboBox):
         return tuple(items)
 
     def set_items(
-        self, items: Sequence[Item] = (), exclusive_items: Sequence[Item] = ()
+        self,
+        items: Mapping[str, T] | None = None,
+        exclusive_items: Mapping[str, T] | None = None,
     ) -> None:
         model = self.model()
         if not isinstance(model, QtGui.QStandardItemModel):
@@ -101,7 +106,7 @@ class MultiComboBox(QtWidgets.QComboBox):
 
         model.clear()
         if exclusive_items:
-            for label, data in exclusive_items:
+            for label, data in exclusive_items.items():
                 item = QtGui.QStandardItem()
                 item.setText(label)
                 item.setData(data)
@@ -117,7 +122,7 @@ class MultiComboBox(QtWidgets.QComboBox):
             model.appendRow(separator)
 
         if items:
-            for label, data in items:
+            for label, data in items.items():
                 item = QtGui.QStandardItem()
                 item.setText(label)
                 item.setData(data)
@@ -126,12 +131,12 @@ class MultiComboBox(QtWidgets.QComboBox):
 
         self._index_changed()
 
-    def checked_values(self) -> tuple[Any, ...]:
+    def checked_values(self) -> tuple[T, ...]:
         items = self._checked_items()
         values = [item.data() for item in items]
         return tuple(values)
 
-    def set_checked_values(self, values: Sequence) -> None:
+    def set_checked_values(self, values: Sequence[T]) -> None:
         model = self.model()
         if not isinstance(model, QtGui.QStandardItemModel):
             return
@@ -226,19 +231,21 @@ class MultiComboBox(QtWidgets.QComboBox):
                     item.setCheckState(QtCore.Qt.CheckState.Unchecked)
 
 
-class MultiComboParameter(ParameterWidget):
-    _default: tuple = ()
-    _value: tuple = ()
-    _items: tuple[Item, ...] = ()
-    _exclusive_items: tuple[Item, ...] = ()
+class MultiComboParameter(ParameterWidget, Generic[T]):
+    _default: tuple[T, ...] = ()
+    _value: tuple[T, ...] = ()
+    _items: dict[str, T]
+    _exclusive_items: dict[str, T]
 
     def __init__(self, name: str = '', parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(name, parent)
 
+        self._items = {}
+        self._exclusive_items = {}
         self._pressed = False
 
     def _init_ui(self) -> None:
-        self.combo = MultiComboBox()
+        self.combo: MultiComboBox[T] = MultiComboBox()
         self.combo.checked_changed.connect(self._checked_changed)
         self.combo.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed
@@ -247,36 +254,38 @@ class MultiComboParameter(ParameterWidget):
         self._layout.addWidget(self.combo)
         self.setFocusProxy(self.combo)
 
-    def items(self) -> tuple:
-        return self._items
+    def items(self) -> tuple[Item[T], ...]:
+        return tuple(self._items.items())
 
-    def set_items(
-        self, items: Sequence[str] | Sequence[tuple[str, Any]] | Mapping[str, Any]
-    ) -> None:
+    def set_items(self, items: Mapping[str, T] | Sequence[Item[T] | T]) -> None:
         """
         Set the items of the parameter.
 
-        `items` is either in the format of label, or (label, data).
+        `items` is either in the format of data, or (label, data).
+
+        :raises ValueError: if there are duplicate labels.
         """
 
-        self._items = utils.items(items)
+        self._items = items_dict(items)
         self._refresh_items()
         self.reset()
 
-    def exclusive_items(self) -> tuple:
-        return self._exclusive_items
+    def exclusive_items(self) -> tuple[Item[T], ...]:
+        return tuple(self._exclusive_items.items())
 
     def set_exclusive_items(
-        self, items: Sequence[str] | Sequence[tuple[str, Any]] | Mapping[str, Any]
+        self, items: Mapping[str, T] | Sequence[Item[T] | T]
     ) -> None:
         """
         Set the exclusive items of the parameter. Exclusive items automatically clear
         other items and only allow one of them to be selected at any time.
 
-        `items` is either in the format of label, or (label, data).
+        `items` is either in the format of data, or (label, data).
+
+        :raises ValueError: if there are duplicate labels.
         """
 
-        self._exclusive_items = utils.items(items)
+        self._exclusive_items = items_dict(items)
         self._refresh_items()
         self.reset()
 
@@ -298,10 +307,10 @@ class MultiComboParameter(ParameterWidget):
     def set_placeholder(self, placeholder: str) -> None:
         self.combo.setPlaceholderText(placeholder)
 
-    def value(self) -> tuple:
+    def value(self) -> tuple[T, ...]:
         return super().value()
 
-    def set_value(self, value: Sequence) -> None:
+    def set_value(self, value: Sequence[T]) -> None:
         self.combo.blockSignals(True)
         self.combo.set_checked_values(value)
         self.combo.blockSignals(False)
@@ -320,3 +329,23 @@ class MultiComboParameter(ParameterWidget):
         self.combo.blockSignals(True)
         self.combo.set_items(self._items, self._exclusive_items)
         self.combo.blockSignals(False)
+
+
+def items_dict(items: Mapping[str, T] | Sequence[Any]) -> dict[str, T]:
+    """
+    Return a dict of items in (label, data) format, keyed by unique label.
+
+    :raises ValueError: if a label appears more than once.
+    """
+
+    if isinstance(items, Mapping):
+        return dict(items)
+
+    result: dict[str, T] = {}
+    for item in items:
+        label, data = item if isinstance(item, tuple) else (str(item), item)
+        if label in result:
+            raise ValueError(f'duplicate label: {label!r}')
+        result[label] = data
+
+    return result

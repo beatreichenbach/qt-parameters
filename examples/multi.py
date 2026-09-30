@@ -21,15 +21,38 @@ class WidgetGallery(QtWidgets.QWidget):
         self.setLayout(layout)
 
         form = ParameterForm()
+        form.parameter_changed.connect(lambda p: logging.debug(p.value()))
         layout.addWidget(form)
 
-        parm = MultiComboParameter('multi')
-        parm.set_items(('alice', 'bob', 'charlie'))
+        items = ('apple', 'banana', 'cherry', 'dragonfruit', 'edamame', 'fig')
+
+        parm = MultiComboParameter[str]('multi')
+        parm.set_items(items)
+        form.add_parameter(parm)
+
+        parm = MultiComboParameter[str]('multi_exclusive')
+        parm.set_items(items)
         parm.set_exclusive_items(('all', 'none'))
-        parm.set_placeholder('Select Options ...')
-        parm.set_value(('alice', 'bob', 'none'))
-        parm.combo.set_maximum_selection(2)
-        parm.value_changed.connect(logging.debug)
+        form.add_parameter(parm)
+
+        parm = MultiComboParameter[str]('multi_placeholder')
+        parm.set_items(items)
+        parm.set_placeholder('Select produce ...')
+        form.add_parameter(parm)
+
+        parm = MultiComboParameter[str]('multi_limits')
+        parm.set_items(items)
+        parm.set_minimum_selection(2)
+        parm.set_maximum_selection(4)
+        parm.set_default(('apple', 'banana'))
+        form.add_parameter(parm)
+
+        parm = MultiComboParameter[int]('multi_int')
+        parm.set_items(tuple(range(1, 10)))
+        parm.set_default((2,))
+        values = parm.value()
+        for value in values:
+            assert isinstance(value, int)
         form.add_parameter(parm)
 
 
