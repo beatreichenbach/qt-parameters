@@ -3,9 +3,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any, cast
 
-from qtpy import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from .parameters import BoolParameter, ParameterWidget
+from .tooltips import ParameterLabel, ToolTipManager
 from .widgets import (
     CollapsibleBox,
     RadioTabWidget,
@@ -32,89 +33,9 @@ class Separator(QtWidgets.QWidget):
         layout.addWidget(frame)
 
 
-class ParameterToolTip(QtWidgets.QFrame):
-    def __init__(
-        self, widget: ParameterWidget, parent: QtWidgets.QWidget | None = None
-    ) -> None:
-        super().__init__(parent)
-
-        self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.setAutoFillBackground(True)
-
-        palette = self.palette()
-        palette.setColor(
-            QtGui.QPalette.ColorRole.Window,
-            palette.color(QtGui.QPalette.ColorRole.Base),
-        )
-        self.setPalette(palette)
-
-        layout = QtWidgets.QVBoxLayout()
-        self.setLayout(layout)
-
-        layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetFixedSize)
-
-        title = QtWidgets.QLabel(widget.label(), self)
-        font = title.font()
-        font.setBold(True)
-        title.setFont(font)
-        layout.addWidget(title)
-
-        separator = QtWidgets.QFrame(self)
-        separator.setFrameShape(QtWidgets.QFrame.Shape.HLine)
-        layout.addWidget(separator)
-
-        typ = type(widget).__name__.replace('Parameter', '')
-        detail = QtWidgets.QLabel(f'Parameter: {widget.name()} ({typ})', self)
-        layout.addWidget(detail)
-
-        tooltip = QtWidgets.QLabel(widget.tooltip(), self)
-        # tooltip.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
-        tooltip.setWordWrap(True)
-        tooltip.setAlignment(
-            QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-        layout.addWidget(tooltip)
-
-    def focusOutEvent(self, event: QtCore.QEvent) -> None:
-        self.hide()
-
-    def leaveEvent(self, event: QtCore.QEvent) -> None:
-        self.hide()
-
-
-class ParameterLabel(QtWidgets.QLabel):
-    def __init__(
-        self, widget: ParameterWidget, parent: QtWidgets.QWidget | None = None
-    ) -> None:
-        super().__init__(widget.label(), parent)
-
-        self._tooltip: ParameterToolTip | None = None
-        self._widget = widget
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({self.text()!r})'
-
-    def enterEvent(self, event: QtGui.QEnterEvent) -> None:
-        if self._widget.tooltip():
-            QtCore.QTimer.singleShot(600, self.show_tooltip)
-        super().enterEvent(event)
-
-    def show_tooltip(self) -> None:
-        global_position = QtGui.QCursor.pos()
-        parent = self.parent()
-        if isinstance(parent, QtWidgets.QWidget):
-            if self.geometry().contains(parent.mapFromGlobal(global_position)):
-                if self._tooltip is None:
-                    tooltip = ParameterToolTip(self._widget)
-                    tooltip.setParent(self.window(), QtCore.Qt.WindowType.ToolTip)
-                    self._tooltip = tooltip
-                else:
-                    tooltip = self._tooltip
-                tooltip.move(global_position)
-                tooltip.show()
-
-
 class LabelFilter(QtCore.QObject):
+    """Mirror a watched widget's enabled and visible state onto a label."""
+
     def __init__(
         self, label: QtWidgets.QLabel, parent: QtWidgets.QWidget | None = None
     ) -> None:
@@ -318,6 +239,7 @@ class ParameterForm(QtWidgets.QWidget):
             label.setVisible(False)
             label_filter = LabelFilter(label)
             widget.installEventFilter(label_filter)
+            ToolTipManager.instance().register(label)
 
         # Widget
         self._layout.addWidget(widget, row, 2)
@@ -448,6 +370,7 @@ class ParameterForm(QtWidgets.QWidget):
     def clear(self) -> None:
         """Clear the form from all parameters, widgets and forms."""
 
+        ToolTipManager.instance().hide()
         for i in reversed(range(self._layout.count())):
             if item := self._layout.itemAt(i):
                 if widget := item.widget():
@@ -460,6 +383,7 @@ class ParameterForm(QtWidgets.QWidget):
     def remove_parameter(self, parameter: ParameterWidget) -> None:
         """Remove and delete a parameter from the form."""
 
+        ToolTipManager.instance().hide()
         index = self._layout.indexOf(parameter)
         if index < 0:
             return
@@ -474,6 +398,7 @@ class ParameterForm(QtWidgets.QWidget):
 
     def remove_form(self, form: ParameterForm) -> None:
         """Remove a form from the form. This does not remove box or tab widgets."""
+        ToolTipManager.instance().hide()
         name = form.name()
         if name in self._widgets:
             del self._widgets[name]
@@ -484,6 +409,7 @@ class ParameterForm(QtWidgets.QWidget):
     def remove_widget(self, widget: QtWidgets.QWidget) -> None:
         """Remove and delete a widget from the form."""
 
+        ToolTipManager.instance().hide()
         self._layout.removeWidget(widget)
         widget.deleteLater()
         self._refresh_stretch()

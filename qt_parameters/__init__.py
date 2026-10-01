@@ -1,8 +1,6 @@
 from .editor import (
     ParameterEditor,
     ParameterForm,
-    ParameterLabel,
-    ParameterToolTip,
 )
 from .lists import ListParameter
 from .parameters import (
@@ -29,6 +27,10 @@ from .parameters import (
     StringParameter,
     TabDataParameter,
     TextParameter,
+)
+from .tooltips import (
+    ParameterLabel,
+    ParameterToolTip,
 )
 from .widgets import (
     CollapsibleBox,
