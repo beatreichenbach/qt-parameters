@@ -28,7 +28,11 @@ from qt_parameters import (
     TabDataParameter,
 )
 
-Vehicle = Enum('Vehicle', 'Bicycle Car Plane')
+
+class Vehicle(Enum):
+    Bicycle = 'Bicycle'
+    Car = 'Car'
+    Plane = 'Plane'
 
 
 class WidgetGallery(QtWidgets.QWidget):
@@ -183,7 +187,7 @@ class WidgetGallery(QtWidgets.QWidget):
         parm.set_items(('Red', 'Green', 'Blue'))
         form.add_parameter(parm)
 
-        parm = EnumParameter('enum')
+        parm = EnumParameter[Vehicle]('enum')
         parm.set_enum(Vehicle)
         form.add_parameter(parm)
 
