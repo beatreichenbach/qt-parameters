@@ -1,43 +1,41 @@
-from .editor import (
-    ParameterEditor,
-    ParameterForm,
-    ParameterLabel,
-    ParameterToolTip,
-)
-from .lists import ListParameter
-from .parameters import (
+from ._multi import MultiParameterWidget
+from .base import (
     BoolParameter,
-    ColorParameter,
-    ComboParameter,
+    ParameterWidget,
+)
+from .breadcrumbs import (
     CrumbComboBox,
     CrumbParameter,
+)
+from .combos import (
+    ComboParameter,
     EnumParameter,
+)
+from .multi_combos import MultiComboParameter
+from .number import (
     FloatParameter,
     IntParameter,
-    MultiComboParameter,
     MultiFloatParameter,
     MultiIntParameter,
-    MultiParameterWidget,
     NumberParameter,
-    ParameterWidget,
-    PathParameter,
+)
+from .paths import PathParameter
+from .qt_types import (
+    ColorParameter,
     PointFParameter,
     PointParameter,
     SizeFParameter,
     SizeParameter,
+)
+from .strings import (
     StringListParameter,
     StringParameter,
-    TabDataParameter,
     TextParameter,
 )
-from .widgets import (
-    CollapsibleBox,
-    Label,
-)
+from .tabdata import TabDataParameter
 
 __all__ = [
     'BoolParameter',
-    'CollapsibleBox',
     'ColorParameter',
     'ComboParameter',
     'CrumbComboBox',
@@ -45,17 +43,11 @@ __all__ = [
     'EnumParameter',
     'FloatParameter',
     'IntParameter',
-    'Label',
-    'ListParameter',
     'MultiComboParameter',
     'MultiFloatParameter',
     'MultiIntParameter',
     'MultiParameterWidget',
     'NumberParameter',
-    'ParameterEditor',
-    'ParameterForm',
-    'ParameterLabel',
-    'ParameterToolTip',
     'ParameterWidget',
     'PathParameter',
     'PointFParameter',
@@ -67,5 +59,3 @@ __all__ = [
     'TabDataParameter',
     'TextParameter',
 ]
-
-__version__ = '1.3.2'

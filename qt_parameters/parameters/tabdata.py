@@ -5,9 +5,10 @@ from collections.abc import Iterable, Mapping, Sequence
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from .qt_material_icons import MaterialIcon
-from .resizegrip import ResizeGrip
-from .widgets import FloatParameter, IntParameter, ParameterWidget
+from ..qt_material_icons import MaterialIcon
+from ..widgets import ResizeGrip
+from .base import ParameterWidget
+from .number import FloatParameter, IntParameter
 
 ModelIndex = QtCore.QModelIndex | QtCore.QPersistentModelIndex
 Locale = QtCore.QLocale | QtCore.QLocale.Language

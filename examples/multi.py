@@ -3,8 +3,7 @@ import logging
 from qtpy import QtWidgets
 
 from examples import application
-from qt_parameters import ParameterForm
-from qt_parameters.multi import MultiComboParameter
+from qt_parameters import MultiComboParameter, ParameterForm
 
 
 class WidgetGallery(QtWidgets.QWidget):

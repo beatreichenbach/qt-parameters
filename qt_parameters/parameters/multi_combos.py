@@ -6,7 +6,7 @@ from typing import Any, Generic, TypeVar
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from .widgets import ParameterWidget
+from .base import ParameterWidget
 
 logger = logging.getLogger(__name__)
 

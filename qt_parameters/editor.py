@@ -5,11 +5,13 @@ from typing import Any, cast
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from . import utils
-from .box import CollapsibleBox
-from .rediotab import RadioTabWidget
-from .scrollarea import VerticalScrollArea
-from .widgets import BoolParameter, ParameterWidget
+from .parameters import BoolParameter, ParameterWidget
+from .widgets import (
+    CollapsibleBox,
+    RadioTabWidget,
+    VerticalScrollArea,
+    utils,
+)
 
 Boxes = tuple[str, ...]
 State = dict[str, 'State | Boxes']

@@ -5,7 +5,7 @@ from collections.abc import Sequence
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from .qt_material_icons import MaterialIcon
+from ..qt_material_icons import MaterialIcon
 
 PixelMetric = QtWidgets.QStyle.PixelMetric
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-from .qt_material_icons import MaterialIcon
+from ..qt_material_icons import MaterialIcon
 
 
 class RadioTabWidget(QtWidgets.QTabWidget):

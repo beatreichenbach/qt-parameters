@@ -8,8 +8,8 @@ from typing import Callable
 from qtpy import QtCore, QtGui, QtWidgets
 
 from .editor import ParameterForm
+from .parameters import ParameterWidget
 from .qt_material_icons import MaterialIcon
-from .widgets import ParameterWidget, TextParameter
 
 logger = logging.getLogger(__name__)
 
@@ -326,41 +326,3 @@ class ListParameter(ParameterWidget[tuple[object, ...]]):
             elif isinstance(widget, ParameterForm):
                 values.append(widget.values())
         return tuple(values)
-
-
-class StringListParameter(TextParameter[tuple[str, ...]]):
-    _value: tuple[str, ...] = ()
-    _default: tuple[str, ...] = ()
-    _area: bool = True
-
-    def set_value(self, value: Sequence[str]) -> None:
-        super().set_value(tuple(value))
-
-    def _set_text(self, value: tuple[str, ...]) -> None:
-        if isinstance(self.text, QtWidgets.QPlainTextEdit):
-            self.text.setPlainText('\n'.join(value))
-            self._refresh_height()
-        elif isinstance(self.text, QtWidgets.QLineEdit):
-            self.text.setText(' '.join(value))
-
-    def _text_value(self) -> tuple[str, ...]:
-        if isinstance(self.text, QtWidgets.QPlainTextEdit):
-            values = self.text.toPlainText().split('\n')
-        elif isinstance(self.text, QtWidgets.QLineEdit):
-            values = self.text.text().split(' ')
-        else:
-            return ()
-        return tuple(v for v in values if v)
-
-    def _action_triggered(self, action: QtGui.QAction) -> None:
-        data = action.data()
-        value = str(data)
-        if self._menu_mode == self.MenuMode.REPLACE:
-            self.set_value((value,))
-        elif self._menu_mode == self.MenuMode.TOGGLE:
-            values = self._value
-            if value in values:
-                values = tuple(v for v in values if v != value)
-            else:
-                values = (*values, value)
-            self.set_value(values)

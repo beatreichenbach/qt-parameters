@@ -7,7 +7,7 @@ from typing import Generic, TypeVar
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from .qt_material_icons import MaterialIcon
+from ..qt_material_icons import MaterialIcon
 
 SUCCESS = 25
 
