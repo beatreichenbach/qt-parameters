@@ -48,7 +48,98 @@ print(editor.values())
 app.exec()
 ```
 
-For more examples see the `examples` directory.
+For more examples see the [examples](examples) directory.
+
+### Generic
+
+Parameters are generic over their value type, so `value()` and `set_value()` are typed.
+Parameters that work with arbitrary data take a type argument:
+
+```python
+from enum import Enum
+
+from qt_parameters import ComboParameter, EnumParameter
+
+
+class Vehicle(Enum):
+    Bicycle = 'Bicycle'
+    Car = 'Car'
+    Plane = 'Plane'
+
+
+parm = EnumParameter[Vehicle]('vehicle')
+parm.set_enum(Vehicle)
+value = parm.value()  # Vehicle | None
+
+parm = ComboParameter[int]('level')
+parm.set_items({'Low': 1, 'Medium': 2, 'High': 3})
+value = parm.value()  # int | None
+```
+
+## Screenshots
+
+<details>
+<summary>Editor</summary>
+
+![Editor](https://raw.githubusercontent.com/beatreichenbach/qt-parameters/refs/heads/main/.github/assets/editor.png)
+
+</details>
+
+<details>
+<summary>Numbers</summary>
+
+![Numbers](https://raw.githubusercontent.com/beatreichenbach/qt-parameters/refs/heads/main/.github/assets/numbers.png)
+
+</details>
+
+<details>
+<summary>Strings</summary>
+
+![Strings](https://raw.githubusercontent.com/beatreichenbach/qt-parameters/refs/heads/main/.github/assets/strings.png)
+
+</details>
+
+<details>
+<summary>Combos</summary>
+
+![Combos](https://raw.githubusercontent.com/beatreichenbach/qt-parameters/refs/heads/main/.github/assets/combos.png)
+
+</details>
+
+<details>
+<summary>Qt Types</summary>
+
+![Qt Types](https://raw.githubusercontent.com/beatreichenbach/qt-parameters/refs/heads/main/.github/assets/qt_types.png)
+
+</details>
+
+<details>
+<summary>Multi Combos</summary>
+
+![Multi Combos](https://raw.githubusercontent.com/beatreichenbach/qt-parameters/refs/heads/main/.github/assets/multi_combos.png)
+
+</details>
+
+<details>
+<summary>Lists</summary>
+
+![Lists](https://raw.githubusercontent.com/beatreichenbach/qt-parameters/refs/heads/main/.github/assets/lists.png)
+
+</details>
+
+<details>
+<summary>Tab Data</summary>
+
+![Tab Data](https://raw.githubusercontent.com/beatreichenbach/qt-parameters/refs/heads/main/.github/assets/tabdata.png)
+
+</details>
+
+<details>
+<summary>Breadcrumbs</summary>
+
+![Breadcrumbs](https://raw.githubusercontent.com/beatreichenbach/qt-parameters/refs/heads/main/.github/assets/breadcrumbs.png)
+
+</details>
 
 ## Contributing
 

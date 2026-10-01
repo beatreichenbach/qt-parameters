@@ -3,7 +3,7 @@ import logging
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from examples import application
+from examples import application, screenshot_button
 from qt_parameters import (
     BoolParameter,
     ColorParameter,
@@ -22,10 +22,7 @@ from qt_parameters import (
 )
 
 
-class Editor(ParameterEditor):
-    def __init__(self, name: str = '', parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__(name=name, parent=parent)
-
+class EditorA(ParameterEditor):
     def init_ui(self) -> None:
         # Numbers
         form = ParameterForm('numbers')
@@ -76,6 +73,9 @@ class Editor(ParameterEditor):
         parm = BoolParameter('bool')
         self.add_parameter(parm)
 
+
+class EditorB(ParameterEditor):
+    def init_ui(self) -> None:
         parm = ComboParameter('combo')
         self.add_parameter(parm)
 
@@ -146,7 +146,8 @@ class EditorGallery(QtWidgets.QWidget):
                 'qcolor': QtGui.QColor(234, 12, 40),
             },
         }
-        self.editors[1].set_values(values)
+        for editor in self.editors[1:]:
+            editor.set_values(values)
 
         for editor in self.editors:
             values = editor.values()
@@ -157,25 +158,40 @@ class EditorGallery(QtWidgets.QWidget):
 
     def _init_ui(self) -> None:
         self.setWindowTitle('Parameter Editors')
-        self.resize(640, 840)
+        self.resize(1280, 480)
+
+        outer = QtWidgets.QVBoxLayout()
+        self.setLayout(outer)
 
         layout = QtWidgets.QHBoxLayout()
-        self.setLayout(layout)
+        outer.addLayout(layout)
 
         self.editors = []
 
         # Editor 1
-        editor = Editor()
+        editor = EditorA()
         editor.init_ui()
         layout.addWidget(editor)
         self.editors.append(editor)
 
         # Editor 2
-        editor = Editor()
+        editor = EditorA()
         editor.set_unique_names(True)
         editor.init_ui()
         layout.addWidget(editor)
         self.editors.append(editor)
+
+        # Editor 3
+        editor = EditorB()
+        editor.init_ui()
+        layout.addWidget(editor)
+        self.editors.append(editor)
+
+        # Screenshot
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addWidget(screenshot_button(self, 'editor'))
+        button_layout.addStretch()
+        outer.addLayout(button_layout)
 
 
 def main() -> None:

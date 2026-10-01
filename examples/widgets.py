@@ -1,12 +1,11 @@
 import json
 import logging
-import os
 from enum import Enum
 
 import qt_themes
 from qtpy import QtCore, QtGui, QtWidgets
 
-from examples import application
+from examples import application, save_screenshot
 from qt_parameters import (
     BoolParameter,
     CollapsibleBox,
@@ -192,6 +191,7 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_parameter(parm)
 
         parm = BoolParameter('bool')
+        parm.set_tooltip('This is a checkable bool parameter.')
         form.add_parameter(parm)
 
         parm = IntParameter('tooltip')
@@ -294,9 +294,7 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_widget(label)
 
     def _screenshot(self) -> None:
-        path = os.path.join('..', '.github', 'assets', 'editor.png')
-        pixmap = self.grab()
-        pixmap.save(path)
+        save_screenshot(self, 'widgets')
 
 
 def main() -> None:

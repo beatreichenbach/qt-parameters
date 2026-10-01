@@ -2,8 +2,14 @@ import logging
 
 from qtpy import QtWidgets
 
-from examples import application
-from qt_parameters import FloatParameter, IntParameter, ParameterForm
+from examples import application, screenshot_button
+from qt_parameters import (
+    FloatParameter,
+    IntParameter,
+    MultiFloatParameter,
+    MultiIntParameter,
+    ParameterForm,
+)
 
 
 class WidgetGallery(QtWidgets.QWidget):
@@ -14,17 +20,16 @@ class WidgetGallery(QtWidgets.QWidget):
 
     def _init_ui(self) -> None:
         self.setWindowTitle('Number Widgets')
-        self.resize(1280, 560)
+        self.resize(720, 560)
 
+        outer = QtWidgets.QVBoxLayout()
+        self.setLayout(outer)
         layout = QtWidgets.QHBoxLayout()
-        self.setLayout(layout)
+        outer.addLayout(layout)
 
-        self.forms = []
-
-        # Column 1
+        # Column 1 (Int)
         parameter_form = ParameterForm()
         layout.addWidget(parameter_form)
-        self.forms.append(parameter_form)
 
         # Int Ticks
         form = ParameterForm('int_ticks')
@@ -77,6 +82,21 @@ class WidgetGallery(QtWidgets.QWidget):
         parm.set_default(100)
         parm.set_step_factor(3)
         form.add_parameter(parm)
+
+        # Multi Int
+        form = ParameterForm('multi_int')
+        parameter_form.add_form(form)
+
+        parm = MultiIntParameter('multi_int')
+        form.add_parameter(parm)
+
+        parm = MultiIntParameter('multi_int_no_ratio')
+        parm.set_keep_ratio(False)
+        form.add_parameter(parm)
+
+        # Column 2 (Float)
+        parameter_form = ParameterForm()
+        layout.addWidget(parameter_form)
 
         # Float Ticks
         form = ParameterForm('float_ticks')
@@ -150,6 +170,23 @@ class WidgetGallery(QtWidgets.QWidget):
         parm.set_default(100)
         parm.set_step_factor(4)
         form.add_parameter(parm)
+
+        # Multi Float
+        form = ParameterForm('multi_float')
+        parameter_form.add_form(form)
+
+        parm = MultiFloatParameter('multi_float')
+        form.add_parameter(parm)
+
+        parm = MultiFloatParameter('multi_float_no_ratio')
+        parm.set_keep_ratio(False)
+        form.add_parameter(parm)
+
+        # Screenshot
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addWidget(screenshot_button(self, 'numbers'))
+        button_layout.addStretch()
+        outer.addLayout(button_layout)
 
 
 def main() -> None:

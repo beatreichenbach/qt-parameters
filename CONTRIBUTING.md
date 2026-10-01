@@ -48,6 +48,17 @@ uv run qtmaterialicons -o qt_parameters --names \
 
 [qt-material-icons]: https://github.com/beatreichenbach/qt-material-icons
 
+### Screenshots
+
+Each example gallery has a **Screenshot** button that saves the window to `.github/assets/<name>.png`.
+
+The README header is created from `widgets.png`:
+
+```sh
+cd .github
+uv run python create_images.py
+```
+
 ### Releasing Changes
 
 To version up using [python-semantic-release](https://github.com/python-semantic-release/python-semantic-release):
