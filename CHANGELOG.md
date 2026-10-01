@@ -2,6 +2,52 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-09-30)
+
+### Bug Fixes
+
+- Add multi options
+  ([`5d97bc6`](https://github.com/beatreichenbach/qt-parameters/commit/5d97bc618eea082b05cf0b5d34353907e3463474))
+
+- Make multi generic
+  ([`d79b103`](https://github.com/beatreichenbach/qt-parameters/commit/d79b10312515a70cb69e8309c462a020137898ab))
+
+- Type checking
+  ([`5e09301`](https://github.com/beatreichenbach/qt-parameters/commit/5e09301cd15042903e30aa1095104bb6cba14fa3))
+
+- Use extracted material icons
+  ([`6e8fc85`](https://github.com/beatreichenbach/qt-parameters/commit/6e8fc85d29fe1e4ca2e2e2fe5bbf02cc578b1580))
+
+### Build System
+
+- Include child packages
+  ([`1e9e50e`](https://github.com/beatreichenbach/qt-parameters/commit/1e9e50e76d6441495243e5526bc358f886fe2233))
+
+- Move to uv, ruff, ty
+  ([`406bb9c`](https://github.com/beatreichenbach/qt-parameters/commit/406bb9c643ef28789936fb3fe9b889c331448a93))
+
+### Code Style
+
+- Docstrings
+  ([`b82a27e`](https://github.com/beatreichenbach/qt-parameters/commit/b82a27e7f06f284f68e3590f7d13a1b2bcec193a))
+
+- Format with ruff
+  ([`c8509ad`](https://github.com/beatreichenbach/qt-parameters/commit/c8509ad8596d2f498e63821b721f40231f0422f5))
+
+### Features
+
+- Add multi parameters
+  ([`0dabdcf`](https://github.com/beatreichenbach/qt-parameters/commit/0dabdcf9e8a3ac7a55be1fa586c6a7317f98ce9d))
+
+### Refactoring
+
+- Add generics
+  ([`6ea13d0`](https://github.com/beatreichenbach/qt-parameters/commit/6ea13d0cc5588dc772b842e4d323dda16d44c0c9))
+
+- Organize into packages
+  ([`98c6ed8`](https://github.com/beatreichenbach/qt-parameters/commit/98c6ed85a0befa86adff3f33372730324be0e172))
+
+
 ## v1.3.2 (2026-06-20)
 
 ### Bug Fixes
