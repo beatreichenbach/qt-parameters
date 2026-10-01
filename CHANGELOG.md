@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.4.1 (2026-09-30)
+
+### Bug Fixes
+
+- **editor**: Move tooltip management to module
+  ([`7094487`](https://github.com/beatreichenbach/qt-parameters/commit/709448709f1ad45d68cbfedf268f3538674d0fb3))
+
+### Build System
+
+- Harden PyPI trusted publishing workflow
+  ([`245f2f2`](https://github.com/beatreichenbach/qt-parameters/commit/245f2f2ea0d7172724917a6810a172878ac921da))
+
+### Testing
+
+- Add examples and screenshots
+  ([`681ec23`](https://github.com/beatreichenbach/qt-parameters/commit/681ec237c9e4f1ec02ad2494988f5ff855bf7023))
+
+
 ## v1.4.0 (2026-09-30)
 
 ### Bug Fixes
