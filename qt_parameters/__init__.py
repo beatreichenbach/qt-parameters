@@ -27,6 +27,9 @@ from .parameters import (
     StringParameter,
     TabDataParameter,
     TextParameter,
+    TokenComboBox,
+    TokenParameter,
+    TokenWidget,
 )
 from .tooltips import (
     ParameterLabel,
@@ -68,6 +71,9 @@ __all__ = [
     'StringParameter',
     'TabDataParameter',
     'TextParameter',
+    'TokenComboBox',
+    'TokenParameter',
+    'TokenWidget',
 ]
 
 __version__ = '1.4.1'

@@ -33,6 +33,11 @@ from .strings import (
     TextParameter,
 )
 from .tabdata import TabDataParameter
+from .tokens import (
+    TokenComboBox,
+    TokenParameter,
+    TokenWidget,
+)
 
 __all__ = [
     'BoolParameter',
@@ -58,4 +63,7 @@ __all__ = [
     'StringParameter',
     'TabDataParameter',
     'TextParameter',
+    'TokenComboBox',
+    'TokenParameter',
+    'TokenWidget',
 ]

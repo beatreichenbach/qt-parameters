@@ -3,7 +3,7 @@ import logging
 from qtpy import QtCore, QtGui, QtWidgets
 
 from examples import application, save_pixmap
-from qt_parameters import MultiComboParameter, ParameterForm
+from qt_parameters import MultiComboParameter, ParameterForm, TokenParameter
 
 
 class WidgetGallery(QtWidgets.QWidget):
@@ -14,7 +14,7 @@ class WidgetGallery(QtWidgets.QWidget):
 
     def _init_ui(self) -> None:
         self.setWindowTitle('Multi Combo Widgets')
-        self.resize(720, 320)
+        self.resize(720, 400)
 
         layout = QtWidgets.QVBoxLayout()
         self.setLayout(layout)
@@ -27,12 +27,6 @@ class WidgetGallery(QtWidgets.QWidget):
 
         parm = MultiComboParameter[str]('multi')
         parm.set_items(items)
-        parameter_form.add_parameter(parm)
-
-        self.exclusive_parameter = parm = MultiComboParameter[str]('multi_exclusive')
-        parm.set_items(items)
-        parm.set_exclusive_items(('all', 'none'))
-        parm.set_default(('all',))
         parameter_form.add_parameter(parm)
 
         parm = MultiComboParameter[str]('multi_placeholder')
@@ -53,6 +47,17 @@ class WidgetGallery(QtWidgets.QWidget):
         values = parm.value()
         for value in values:
             assert isinstance(value, int)
+        parameter_form.add_parameter(parm)
+
+        token_parameter = TokenParameter[str]('tokens')
+        token_parameter.set_items((*items, 'apple_juice', 'banana_bread', 'cherry_pie'))
+        token_parameter.set_value(('apple', 'banana'))
+        parameter_form.add_parameter(token_parameter)
+
+        self.exclusive_parameter = parm = MultiComboParameter[str]('multi_exclusive')
+        parm.set_items(items)
+        parm.set_exclusive_items(('all', 'none'))
+        parm.set_default(('all',))
         parameter_form.add_parameter(parm)
 
         # Screenshot

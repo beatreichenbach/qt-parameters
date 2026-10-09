@@ -30,6 +30,7 @@ uv run qtmaterialicons -o qt_parameters --names \
     add \
     check_circle \
     chevron_right \
+    close \
     delete \
     drag_handle \
     error \
