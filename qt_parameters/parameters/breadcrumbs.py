@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any
+from typing import Generic, TypeVar, cast
 
 from qtpy import QtCore, QtGui, QtWidgets
 
 from ..widgets import ComboBox
 from .base import ParameterWidget
 
+T = TypeVar('T')
 ModelIndex = QtCore.QModelIndex | QtCore.QPersistentModelIndex
 
 
@@ -116,11 +117,11 @@ class CrumbComboBox(ComboBox):
         self._completer_model.setStringList(strings)
 
 
-class CrumbParameter(ParameterWidget[object | None]):
+class CrumbParameter(ParameterWidget[T | None], Generic[T]):
     value_changed = QtCore.Signal(object)
 
-    _value: Any = None
-    _default: Any = None
+    _value: T | None = None
+    _default: T | None = None
     _model: QtCore.QAbstractItemModel
     _max_items: int = 0
 
@@ -150,15 +151,14 @@ class CrumbParameter(ParameterWidget[object | None]):
         self._model = model
         self._reset()
 
-    def value(self) -> object:
+    def value(self) -> T | None:
         if item := self._layout.itemAt(self._layout.count() - 2):
             combo = item.widget()
             if isinstance(combo, CrumbComboBox):
-                value = combo.currentData()
-                return value
+                return cast('T | None', combo.currentData())
         return None
 
-    def set_value(self, value: object) -> None:
+    def set_value(self, value: T | None) -> None:
         if self._value != value:
             self._reset()
             if value is not None:
@@ -235,7 +235,7 @@ class CrumbParameter(ParameterWidget[object | None]):
             self.setTabOrder(prev, combo)
 
     def _combo_changed(self, combo: CrumbComboBox, index: int) -> None:
-        value = combo.itemData(index, QtCore.Qt.ItemDataRole.UserRole)
+        value = cast('T | None', combo.itemData(index, QtCore.Qt.ItemDataRole.UserRole))
         self._remove_to_combo(combo)
         combo.setEditable(False)
         model_index = self._model.index(index, 0, combo.rootModelIndex())

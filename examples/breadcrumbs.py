@@ -71,7 +71,7 @@ class WidgetGallery(QtWidgets.QWidget):
         self.tree.expandToDepth(0)
         layout.addWidget(self.tree)
 
-        crumb_parameter = CrumbParameter()
+        crumb_parameter = CrumbParameter[str]()
         crumb_parameter.set_model(model)
         crumb_parameter.set_value('Dog')
         layout.addWidget(crumb_parameter)
