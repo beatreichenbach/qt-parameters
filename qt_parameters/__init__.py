@@ -38,6 +38,7 @@ from .tooltips import (
 from .widgets import (
     CollapsibleBox,
     Label,
+    VerticalScrollArea,
 )
 
 __all__ = [
@@ -74,6 +75,7 @@ __all__ = [
     'TokenComboBox',
     'TokenParameter',
     'TokenWidget',
+    'VerticalScrollArea',
 ]
 
 __version__ = '1.4.1'
