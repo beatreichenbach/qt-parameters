@@ -2,6 +2,30 @@
 
 <!-- version list -->
 
+## v1.5.0 (2026-10-09)
+
+### Bug Fixes
+
+- Export VerticalScrollArea
+  ([`907a511`](https://github.com/beatreichenbach/qt-parameters/commit/907a5118eda8bc8eb74acbe15ee81416b41a2a4b))
+
+- **parameters**: Make crumbs generic
+  ([`acf213a`](https://github.com/beatreichenbach/qt-parameters/commit/acf213a49bc8c9a6263ca920b66eb844f3b859c7))
+
+### Documentation
+
+- Add badges to readme
+  ([`f6f753c`](https://github.com/beatreichenbach/qt-parameters/commit/f6f753c2af9d33743e7e389ccd9016d7be8cf3fa))
+
+- Add overview
+  ([`593901a`](https://github.com/beatreichenbach/qt-parameters/commit/593901aaeb7c2b1ebd6c76f4487149f794bbe394))
+
+### Features
+
+- **parameters**: Add token parameters
+  ([`fb331b2`](https://github.com/beatreichenbach/qt-parameters/commit/fb331b29aaf885a271bb5aa638af32912f42b695))
+
+
 ## v1.4.1 (2026-09-30)
 
 ### Bug Fixes
