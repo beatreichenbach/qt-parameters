@@ -82,6 +82,44 @@ parm.set_items({'Low': 1, 'Medium': 2, 'High': 3})
 value = parm.value()  # int | None
 ```
 
+### Parameters
+
+| Parameter                | Value type                       |
+|--------------------------|----------------------------------|
+| `BoolParameter`          | `bool`                           |
+| `IntParameter`           | `int`                            |
+| `FloatParameter`         | `float`                          |
+| `MultiIntParameter`      | `tuple[int, ...]`                |
+| `MultiFloatParameter`    | `tuple[float, ...]`              |
+| `StringParameter`        | `str`                            |
+| `StringListParameter`    | `tuple[str, ...]`                |
+| `PathParameter`          | `str`                            |
+| `ComboParameter[T]`      | `T`                              |
+| `EnumParameter[E]`       | `E` (an `Enum`)                  |
+| `MultiComboParameter[T]` | `tuple[T, ...]`                  |
+| `TokenParameter[T]`      | `tuple[T, ...]`                  |
+| `PointParameter`         | `QPoint`                         |
+| `PointFParameter`        | `QPointF`                        |
+| `SizeParameter`          | `QSize`                          |
+| `SizeFParameter`         | `QSizeF`                         |
+| `ColorParameter`         | `QColor`                         |
+| `TabDataParameter`       | `tuple[tuple[object, ...], ...]` |
+| `CrumbParameter`         | `T`                              |
+| `ListParameter`          | `tuple[object, ...]`             |
+
+### Helpers
+
+| Helper             | Description                                       |
+|--------------------|---------------------------------------------------|
+| `ParameterForm`    | grid container for parameters, forms, and widgets |
+| `ParameterEditor`  | scrollable form of parameters                     |
+| `ParameterWidget`  | base class for all parameters                     |
+| `ParameterLabel`   | parameter label widget                            |
+| `ParameterToolTip` | tooltip helper for parameters                     |
+| `CollapsibleBox`   | collapsible and optionally checkable container    |
+| `RadioTabWidget`   | tab widget where only one tab is active           |
+| `Label`            | icon and text label with severity levels          |
+
 ## Screenshots
 
 <details>
