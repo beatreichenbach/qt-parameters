@@ -150,7 +150,7 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
         if not isinstance(model, QtGui.QStandardItemModel):
             return
 
-        # self._clear()
+        self._clear()
         for value in values:
             # NOTE: Possibly unhashable item.data(), so nested linear search
             for row in range(model.rowCount()):
@@ -275,9 +275,10 @@ class MultiComboParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
         :raises ValueError: if there are duplicate labels.
         """
 
+        current_value = self.value()
         self._items = items_dict(items)
         self._refresh_items()
-        self.reset()
+        self.set_value(current_value)
 
     def exclusive_items(self) -> tuple[Item[T], ...]:
         return tuple(self._exclusive_items.items())
