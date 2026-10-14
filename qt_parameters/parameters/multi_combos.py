@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Any, Generic, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
 Item = tuple[str, T]
+DisplayFormatter = Callable[[Sequence[QtGui.QStandardItem], int, str], str]
 EXCLUSIVE_ROLE = QtCore.Qt.ItemDataRole.UserRole + 2
 
 
@@ -19,12 +20,15 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
     checked_changed = QtCore.Signal()
     delimiter: str = ', '
 
+    _formatter: DisplayFormatter
+
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
         self._minimum_selection = 0
         self._maximum_selection = 0
         self._maximum_display_items = 3
+        self._formatter = self.display_text
 
         model = QtGui.QStandardItemModel(parent=self)
         self.setModel(model)
@@ -93,6 +97,15 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
 
     def set_maximum_selection(self, maximum_selection: int) -> None:
         self._maximum_selection = maximum_selection
+
+    def formatter(self) -> DisplayFormatter:
+        return self._formatter
+
+    def set_formatter(self, formatter: DisplayFormatter) -> None:
+        """Replace the function that formats the display text of checked items."""
+
+        self._formatter = formatter
+        self.update()
 
     def items(self) -> tuple[Item[T], ...]:
         items = []
@@ -173,17 +186,9 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
         return tuple(items)
 
     def _display_text(self) -> str:
-        items = self._checked_items()
-        max_items = self._maximum_display_items
-        limited_items = items[:max_items] if max_items > 0 else items
-
-        texts = [item.text() for item in limited_items]
-        if len(texts) < len(items):
-            texts.append('...')
-
-        display_text = self.delimiter.join(texts)
-
-        return display_text
+        return self._formatter(
+            self._checked_items(), self._maximum_display_items, self.delimiter
+        )
 
     def _toggle_selected(self) -> None:
         model = self.model()
@@ -239,6 +244,19 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
                 item = model.item(row, 0)
                 if not exclusive_only or item.data(EXCLUSIVE_ROLE):
                     item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+
+    @staticmethod
+    def display_text(
+        items: Sequence[QtGui.QStandardItem], max_items: int, delimiter: str
+    ) -> str:
+        """Join the labels of `items`, truncating after `max_items` with an ellipsis."""
+
+        limited_items = items[:max_items] if max_items > 0 else items
+        texts = [item.text() for item in limited_items]
+        if len(texts) < len(items):
+            texts.append('...')
+
+        return delimiter.join(texts)
 
 
 class MultiComboParameter(ParameterWidget[tuple[T, ...]], Generic[T]):

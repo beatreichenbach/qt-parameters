@@ -35,13 +35,27 @@ def test_multi_combo_separator(app: QtWidgets.QApplication) -> None:
     button = QtCore.Qt.MouseButton.LeftButton
     QtTest.QTest.mousePress(view.viewport(), button, pos=pos)
     assert parm.value() == ('all',)
+
     QtTest.QTest.mouseRelease(view.viewport(), button, pos=pos)
     assert parm.value() == ('all',)
     assert view.isVisible()
 
 
-def test_multi_combo_order(app: QtWidgets.QApplication) -> None:
+def test_multi_combo_formatter(app: QtWidgets.QApplication) -> None:
     parm = MultiComboParameter[str]('multi')
-    parm.set_items(('apple', 'banana', 'cherry'))
-    parm.set_value(('cherry', 'apple'))
-    print(parm.value())  # ('apple', 'cherry')
+    parm.set_items(('apple', 'banana', 'cherry', 'dragonfruit'))
+    parm.set_value(('apple', 'banana'))
+
+    option = QtWidgets.QStyleOptionComboBox()
+    parm.combo.initStyleOption(option)
+    assert option.currentText == 'apple, banana'
+
+    parm.set_value(('apple', 'banana', 'cherry', 'dragonfruit'))
+    parm.combo.initStyleOption(option)
+    assert option.currentText == 'apple, banana, cherry, ...'
+
+    parm.combo.set_formatter(
+        lambda items, max_items, delimiter: f'{len(items)} selected'
+    )
+    parm.combo.initStyleOption(option)
+    assert option.currentText == '4 selected'
