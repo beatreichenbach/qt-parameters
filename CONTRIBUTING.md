@@ -7,17 +7,17 @@ To get started:
 ```sh
 uv venv --python 3.13
 uv pip install -e ".[dev]"
-pre-commit install
+uv run pre-commit install
 ```
 
 Run the checks:
 
 ```sh
-ruff format qt_parameters examples
-ruff check --select I --fix qt_parameters examples
-ruff check qt_parameters examples
-ty check
-pytest
+uv run ruff format qt_parameters examples
+uv run ruff check --select I --fix qt_parameters examples
+uv run ruff check qt_parameters examples
+uv run ty check
+uv run pytest
 ```
 
 ### Updating Icons
@@ -65,5 +65,5 @@ uv run python create_images.py
 To version up using [python-semantic-release](https://github.com/python-semantic-release/python-semantic-release):
 
 ```sh
-semantic-release version
+uv run semantic-release version
 ```
