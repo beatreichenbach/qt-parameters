@@ -65,6 +65,7 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
 
         if event.type() == QtCore.QEvent.Type.ShortcutOverride:
             select_keys = (
+                QtCore.Qt.Key.Key_Space,  # Key_Select doesn't capture Space on Windows
                 QtCore.Qt.Key.Key_Select,
                 QtCore.Qt.Key.Key_Enter,
                 QtCore.Qt.Key.Key_Return,
