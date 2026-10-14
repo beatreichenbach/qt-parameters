@@ -45,14 +45,23 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
 
     def eventFilter(self, watched: QtCore.QObject, event: QtCore.QEvent) -> bool:
         # NOTE: Override events that would call QComboBox.hidePopup().
-        if watched is self.view().viewport():
+        if watched is self.view().viewport() and isinstance(event, QtGui.QMouseEvent):
             if event.type() == QtCore.QEvent.Type.MouseButtonPress:
-                self._pressed = True
+                # NOTE: Only toggle over a checkable item,
+                # so pressing a separator or empty space is ignored.
+                index = self.view().indexAt(event.pos())
+                model = index.model()
+                checkable = False
+                if isinstance(model, QtGui.QStandardItemModel) and index.isValid():
+                    item = model.itemFromIndex(index)
+                    if item is not None:
+                        checkable = item.isCheckable()
+                self._pressed = checkable
             elif event.type() == QtCore.QEvent.Type.MouseButtonRelease:
                 if self._pressed:
                     self._toggle_selected()
                     self._pressed = False
-                    return True
+                return True
 
         if event.type() == QtCore.QEvent.Type.ShortcutOverride:
             select_keys = (
@@ -118,6 +127,7 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
             separator.setData(
                 'separator', QtCore.Qt.ItemDataRole.AccessibleDescriptionRole
             )
+            separator.setFlags(QtCore.Qt.ItemFlag.NoItemFlags)
             model.appendRow(separator)
 
         if items:
