@@ -2,6 +2,45 @@
 
 <!-- version list -->
 
+## v1.5.1 (2026-10-15)
+
+### Bug Fixes
+
+- **parameters**: Add multi_combos formatter
+  ([`6ed2389`](https://github.com/beatreichenbach/qt-parameters/commit/6ed2389a02939eaa88fdf46f86207f8126b84262))
+
+- **parameters**: Add space key selector
+  ([`8e7fcab`](https://github.com/beatreichenbach/qt-parameters/commit/8e7fcab21db807355611800968a6d69111d7f0db))
+
+- **parameters**: Handle empty mouse clicks in multi combo
+  ([`b02b279`](https://github.com/beatreichenbach/qt-parameters/commit/b02b279899afdd5c369e934cac11686f82205917))
+
+- **parameters**: Hardcode delimeter
+  ([`0deb685`](https://github.com/beatreichenbach/qt-parameters/commit/0deb6850513237419929eecd333893650b203574))
+
+- **parameters**: Preserve values in multi_combos
+  ([`d9d7f94`](https://github.com/beatreichenbach/qt-parameters/commit/d9d7f948073d473c44422da7feb61f69e235f7ff))
+
+- **parameters**: Prevent signal emission on set_items
+  ([`f02edc3`](https://github.com/beatreichenbach/qt-parameters/commit/f02edc3c8d15c36e365a4ce48f8d12e1cbb3b16b))
+
+- **parameters**: Standardize items_tuple and prevent update on set_items
+  ([`8861aaf`](https://github.com/beatreichenbach/qt-parameters/commit/8861aaf152d4b281ceaa4145f4008f2978a3ac27))
+
+### Documentation
+
+- Update uv commands
+  ([`8d08069`](https://github.com/beatreichenbach/qt-parameters/commit/8d08069be7feb5381022a760ab7b7fadedd7f672))
+
+### Testing
+
+- Add simple tests
+  ([`fa7acea`](https://github.com/beatreichenbach/qt-parameters/commit/fa7acea941cce4b52ecda3037f8a408819079b2f))
+
+- Add tests
+  ([`324bcc0`](https://github.com/beatreichenbach/qt-parameters/commit/324bcc0da785e91a26faf751498cb86e07578fe6))
+
+
 ## v1.5.0 (2026-10-09)
 
 ### Bug Fixes
