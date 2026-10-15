@@ -217,12 +217,13 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
         current_index = next(iter(indexes), QtCore.QModelIndex())
 
         # Update the combo box signal to set the text.
+        blocked = self.signalsBlocked()
         self.blockSignals(True)
         if not self._checked_items():
             self.setCurrentIndex(-1)
         else:
             self.setCurrentIndex(0)
-        self.blockSignals(False)
+        self.blockSignals(blocked)
         self.update()
 
         # Restore the current index in the view
