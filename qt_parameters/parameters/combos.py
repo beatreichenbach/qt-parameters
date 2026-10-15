@@ -11,12 +11,13 @@ from .base import ParameterWidget
 
 T = TypeVar('T')
 EnumT = TypeVar('EnumT', bound=Enum)
+Item = tuple[str, T]
 
 
 class ComboParameter(ParameterWidget[T | None], Generic[T]):
     _value: T | None = None
     _default: T | None = None
-    _items: tuple[tuple[str, T], ...] = ()
+    _items: tuple[Item, ...] = ()
 
     def _init_ui(self) -> None:
         self.combo = QtWidgets.QComboBox()
@@ -28,25 +29,25 @@ class ComboParameter(ParameterWidget[T | None], Generic[T]):
         self._layout.addWidget(self.combo)
         self.setFocusProxy(self.combo)
 
-    def items(self) -> tuple[tuple[str, T], ...]:
+    def items(self) -> tuple[Item, ...]:
         return self._items
 
-    def set_items(
-        self, items: Mapping[str, T] | Sequence[T] | Sequence[tuple[str, T]]
-    ) -> None:
+    def set_items(self, items: Mapping[str, T] | Sequence[Item[T] | T]) -> None:
         """
         Set the items of the parameter.
-        `items` is either a sequence or dictionary with format (label, data).
+
+        `items` is either in the format of data, or (label, data).
+
+        :raises ValueError: if there are duplicate labels.
         """
 
-        if isinstance(items, Mapping):
-            parsed: tuple[tuple[str, T], ...] = tuple(items.items())
-        else:
-            parsed = tuple(i if isinstance(i, tuple) else (str(i), i) for i in items)
+        _items = items_tuple(items)
+        if self._items == _items:
+            return
 
-        self._items = parsed
+        self._items = _items
         self._refresh_items()
-        default = parsed[0][1] if parsed else None
+        default = _items[0][1] if _items else None
         self.set_default(default)
         self.set_value(default)
 
@@ -182,3 +183,29 @@ class EnumParameter(ParameterWidget[EnumT | None], Generic[EnumT]):
                 label = self._formatter(member)
                 self.combo.addItem(label, member.value)
         self.combo.blockSignals(False)
+
+
+def items_tuple(
+    items: Mapping[str, T] | Sequence[Item | T] | None,
+) -> tuple[Item, ...]:
+    """
+    Return items as an ordered tuple of (label, data) pairs.
+
+    :raises ValueError: if a label appears more than once.
+    """
+
+    if items is None:
+        return ()
+    if isinstance(items, Mapping):
+        return tuple(items.items())
+
+    result: list[Item] = []
+    labels: set[str] = set()
+    for item in items:
+        label, data = item if isinstance(item, tuple) else (str(item), item)
+        if label in labels:
+            raise ValueError(f'duplicate label: {label!r}')
+        labels.add(label)
+        result.append((label, data))
+
+    return tuple(result)

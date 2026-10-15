@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Any, Callable, Generic, TypeVar
+from typing import Callable, Generic, TypeVar
 
 from qtpy import QtCore, QtGui, QtWidgets
 
 from .base import ParameterWidget
+from .combos import Item, items_tuple
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
-Item = tuple[str, T]
 DisplayFormatter = Callable[[Sequence[QtGui.QStandardItem], int], str]
 EXCLUSIVE_ROLE = QtCore.Qt.ItemDataRole.UserRole + 2
 
@@ -258,14 +258,14 @@ class MultiComboBox(QtWidgets.QComboBox, Generic[T]):
 class MultiComboParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
     _default: tuple[T, ...] = ()
     _value: tuple[T, ...] = ()
-    _items: dict[str, T]
-    _exclusive_items: dict[str, T]
+    _items: tuple[Item[T], ...]
+    _exclusive_items: tuple[Item[T], ...]
 
     def __init__(self, name: str = '', parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(name, parent)
 
-        self._items = {}
-        self._exclusive_items = {}
+        self._items = ()
+        self._exclusive_items = ()
         self._pressed = False
 
     def _init_ui(self) -> None:
@@ -279,7 +279,7 @@ class MultiComboParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
         self.setFocusProxy(self.combo)
 
     def items(self) -> tuple[Item[T], ...]:
-        return tuple(self._items.items())
+        return self._items
 
     def set_items(self, items: Mapping[str, T] | Sequence[Item[T] | T]) -> None:
         """
@@ -290,27 +290,36 @@ class MultiComboParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
         :raises ValueError: if there are duplicate labels.
         """
 
+        _items = items_tuple(items)
+        if _items == self._items:
+            return
+
         current_value = self.value()
-        self._items = items_dict(items)
+        self._items = _items
         self._refresh_items()
         self.set_value(current_value)
 
     def exclusive_items(self) -> tuple[Item[T], ...]:
-        return tuple(self._exclusive_items.items())
+        return self._exclusive_items
 
     def set_exclusive_items(
         self, items: Mapping[str, T] | Sequence[Item[T] | T]
     ) -> None:
         """
-        Set the exclusive items of the parameter. Exclusive items automatically clear
-        other items and only allow one of them to be selected at any time.
+        Set the exclusive items of the parameter.
+        Exclusive items automatically clear other items and only allow one of them to
+        be selected at any time.
 
         `items` is either in the format of data, or (label, data).
 
         :raises ValueError: if there are duplicate labels.
         """
 
-        self._exclusive_items = items_dict(items)
+        _exclusive_items = items_tuple(items)
+        if _exclusive_items == self._exclusive_items:
+            return
+
+        self._exclusive_items = _exclusive_items
         self._refresh_items()
         self.reset()
 
@@ -352,25 +361,5 @@ class MultiComboParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
 
     def _refresh_items(self) -> None:
         self.combo.blockSignals(True)
-        self.combo.set_items(self._items, self._exclusive_items)
+        self.combo.set_items(dict(self._items), dict(self._exclusive_items))
         self.combo.blockSignals(False)
-
-
-def items_dict(items: Mapping[str, T] | Sequence[Any]) -> dict[str, T]:
-    """
-    Return a dict of items in (label, data) format, keyed by unique label.
-
-    :raises ValueError: if a label appears more than once.
-    """
-
-    if isinstance(items, Mapping):
-        return dict(items)
-
-    result: dict[str, T] = {}
-    for item in items:
-        label, data = item if isinstance(item, tuple) else (str(item), item)
-        if label in result:
-            raise ValueError(f'duplicate label: {label!r}')
-        result[label] = data
-
-    return result

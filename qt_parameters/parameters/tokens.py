@@ -8,7 +8,8 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 from ..qt_material_icons import MaterialIcon
 from .base import ParameterWidget
-from .multi_combos import MultiComboBox, items_dict
+from .combos import Item, items_tuple
+from .multi_combos import MultiComboBox
 
 T = TypeVar('T')
 
@@ -195,6 +196,8 @@ class TokenParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
 
     _value: tuple[T, ...] = ()
     _default: tuple[T, ...] = ()
+    _items: tuple[Item[T], ...] = ()
+    _exclusive_items: tuple[Item[T], ...] = ()
 
     def _init_ui(self) -> None:
         self._tokens: list[tuple[TokenWidget, T]] = []
@@ -214,9 +217,9 @@ class TokenParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
         return size_hint
 
     def items(self) -> tuple[tuple[str, T], ...]:
-        return self.combo.items()
+        return self._items
 
-    def set_items(self, items: Mapping[str, T] | Sequence[tuple[str, T] | T]) -> None:
+    def set_items(self, items: Mapping[str, T] | Sequence[Item[T] | T]) -> None:
         """
         Set the items of the parameter.
 
@@ -225,7 +228,21 @@ class TokenParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
         :raises ValueError: if there are duplicate labels.
         """
 
-        self.combo.set_items(items_dict(items))
+        _items = items_tuple(items)
+        if _items == self._items:
+            return
+
+        current_value = self.value()
+        self._items = _items
+        self._refresh_items()
+
+        # Keep only the values that are still present.
+        self.combo.blockSignals(True)
+        self.combo.set_checked_values(current_value)
+        current_value = self.combo.checked_values()
+        self.combo.blockSignals(False)
+
+        self.set_value(current_value)
 
     def placeholder(self) -> str:
         return self.combo.placeholderText()
@@ -322,10 +339,15 @@ class TokenParameter(ParameterWidget[tuple[T, ...]], Generic[T]):
     def _value_label(self, value: T) -> str:
         """Return the label for `value`, or its string form if it is unknown."""
 
-        for label, data in self.combo.items():
+        for label, data in self._items:
             if data == value:
                 return label
         return str(value)
+
+    def _refresh_items(self) -> None:
+        self.combo.blockSignals(True)
+        self.combo.set_items(dict(self._items), dict(self._exclusive_items))
+        self.combo.blockSignals(False)
 
     def _refresh_stretch(self) -> None:
         """Give the last layout item the stretch to keep tokens left-aligned."""

@@ -54,8 +54,23 @@ def test_multi_combo_formatter(app: QtWidgets.QApplication) -> None:
     parm.combo.initStyleOption(option)
     assert option.currentText == 'apple, banana, cherry, ...'
 
-    parm.combo.set_formatter(
-        lambda items, max_items, delimiter: f'{len(items)} selected'
-    )
+    parm.combo.set_formatter(lambda items, max_items: f'{len(items)} selected')
     parm.combo.initStyleOption(option)
     assert option.currentText == '4 selected'
+
+
+def test_multi_combo_scroll(app: QtWidgets.QApplication) -> None:
+    items = [f'item_{i:02d}' for i in range(100)]
+    parm = MultiComboParameter[str]('multi')
+    parm.set_items(items)
+    parm.show()
+    parm.combo.showPopup()
+    view = parm.combo.view()
+    view.setCurrentIndex(view.model().index(50, 0))
+    view.scrollTo(view.currentIndex())
+    row = view.currentIndex().row()
+    scroll = view.verticalScrollBar().value()
+
+    parm.set_items(items)
+    assert view.currentIndex().row() == row
+    assert view.verticalScrollBar().value() == scroll

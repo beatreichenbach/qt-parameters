@@ -20,6 +20,15 @@ def test_combo_parameter_value(app: QtWidgets.QApplication) -> None:
     assert parm.value() == 'c'
 
 
+def test_combo_parameter_set_items_unchanged(app: QtWidgets.QApplication) -> None:
+    parm = ComboParameter('combo')
+
+    parm.set_items(('a', 'b', 'c'))
+    parm.set_value('c')
+    parm.set_items(('a', 'b', 'c'))
+    assert parm.value() == 'c'
+
+
 def test_enum_parameter_formatter(app: QtWidgets.QApplication) -> None:
     parm = EnumParameter('enum')
 
