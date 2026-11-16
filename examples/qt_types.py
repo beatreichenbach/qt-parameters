@@ -43,10 +43,14 @@ class WidgetGallery(QtWidgets.QWidget):
         form.add_parameter(parm)
 
         parm = SizeParameter('qsize')
+        parm.set_slider_min(1)
+        parm.set_slider_max(100)
         parm.set_default(QtCore.QSize(4, 4))
         form.add_parameter(parm)
 
         parm = SizeFParameter('qsizef')
+        parm.set_slider_min(0)
+        parm.set_slider_max(10)
         parm.set_decimals(3)
         parm.set_default(QtCore.QSizeF(0.72, 0.72))
         form.add_parameter(parm)

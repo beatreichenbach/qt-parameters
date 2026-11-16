@@ -31,6 +31,7 @@ class MultiParameterWidget(ParameterWidget[V], Generic[E, V]):
     _slider_visible: bool = True
     _line_min: E | None = None
     _line_max: E | None = None
+    _slider_min: E
     _slider_max: E
 
     lines: list[NumberLineEdit[E]]
@@ -48,6 +49,7 @@ class MultiParameterWidget(ParameterWidget[V], Generic[E, V]):
 
         # Slider
         self.slider = self._create_slider()
+        self.slider.set_minimum(self._slider_min)
         self.slider.set_maximum(self._slider_max)
         self.slider.value_changed.connect(self._slider_value_changed)
         # Prevent any size changes when slider shows
@@ -77,6 +79,12 @@ class MultiParameterWidget(ParameterWidget[V], Generic[E, V]):
     def ratio_visible(self) -> bool:
         return self._ratio_visible
 
+    def slider_min(self) -> E:
+        return self._slider_min
+
+    def slider_max(self) -> E:
+        return self._slider_max
+
     def set_commit_on_edit(self, commit_on_edit: bool) -> None:
         for line in self.lines:
             line.commit_on_edit = commit_on_edit
@@ -99,6 +107,14 @@ class MultiParameterWidget(ParameterWidget[V], Generic[E, V]):
         self._line_max = line_max
         for line in self.lines:
             line.set_maximum(line_max)
+
+    def set_slider_min(self, slider_min: E) -> None:
+        self._slider_min = slider_min
+        self.slider.set_minimum(slider_min)
+
+    def set_slider_max(self, slider_max: E) -> None:
+        self._slider_max = slider_max
+        self.slider.set_maximum(slider_max)
 
     def set_ratio_visible(self, ratio_visible: bool) -> None:
         self._ratio_visible = ratio_visible
@@ -179,6 +195,7 @@ class MultiParameterWidget(ParameterWidget[V], Generic[E, V]):
 
 
 class _MultiIntBase(MultiParameterWidget[int, V], Generic[V]):
+    _slider_min: int = 0
     _slider_max: int = 10
 
     def _create_line(self) -> NumberLineEdit[int]:
@@ -189,6 +206,7 @@ class _MultiIntBase(MultiParameterWidget[int, V], Generic[V]):
 
 
 class _MultiFloatBase(MultiParameterWidget[float, V], Generic[V]):
+    _slider_min: float = 0
     _slider_max: float = 1
     _decimals: int = 4
 
