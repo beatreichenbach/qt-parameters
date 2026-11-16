@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.5.2 (2026-11-16)
+
+### Bug Fixes
+
+- **parameters**: Restore slider min and max on multi parameters
+  ([`6163521`](https://github.com/beatreichenbach/qt-parameters/commit/616352170b5f872b8127048f8d1461d0c48717cb))
+
+### Code Style
+
+- Group ruff
+  ([`925c1f8`](https://github.com/beatreichenbach/qt-parameters/commit/925c1f8ca5192cae0a669b54728993a462b3077a))
+
+
 ## v1.5.1 (2026-10-15)
 
 ### Bug Fixes
